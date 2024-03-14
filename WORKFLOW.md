@@ -64,5 +64,3 @@ This document outlines the data flow and code structure for a research project e
 
 - **Testing**:
   - Implement tests in `tests/test_cases.py` to ensure each component behaves as expected.
-- **Dependencies**:
-  - Ensure all dependencies are listed in `requirements.txt` and installed in your environment. This likely includes `pymongo` for MongoDB interaction, and possibly other libraries for data processing and testing.
