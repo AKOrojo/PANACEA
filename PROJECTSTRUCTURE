@@ -1,0 +1,38 @@
+PANACEA - Policy Analysis and NoSQL Access Control Evaluation Approach/
+│
+├── data/
+│   ├── input/                  # For storing input datasets and NoSQL system dumps - JSON
+│   └── output/                 # For storing processed outputs and views
+│
+├── docs/
+│   └── research_paper.pdf      # The original research paper for reference
+│
+├── src/
+│   ├── unifying_model/
+│   │   ├── __init__.py
+│   │   ├── mapper.py           # Code to perform the mapping to the unifying model
+│   │   └── reducer.py          # Code to aggregate data according to the unifying model
+│   │
+│   ├── policy/
+│   │   ├── __init__.py
+│   │   ├── specification.py    # Code to specify and bind policies to data models
+│   │   └── evaluation.py       # Code to evaluate and apply policies
+│   │
+│   ├── view_generation/
+│   │   ├── __init__.py
+│   │   ├── mapper.py           # Code to map unified model data back to native models
+│   │   ├── reducer.py          # Code to reduce and finalize the view generation
+│   │   └── projector.py        # Code to project the final views based on policy evaluation
+│   │
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── mapreduce_utils.py  # Utilities to support MapReduce operations
+│   │   └── data_utils.py       # General data handling utilities
+│   │
+│   └── main.py                 # Main script to run the entire evaluation process
+│
+├── tests/
+│   ├── __init__.py
+│   └── test_cases.py           # Test cases for unit testing
+│
+└── requirements.txt            # Python package dependencies
