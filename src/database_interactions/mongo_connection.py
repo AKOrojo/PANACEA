@@ -1,5 +1,8 @@
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+from src.utils.log_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_mongo_client(ip='localhost', port=27017):
@@ -12,10 +15,13 @@ def get_mongo_client(ip='localhost', port=27017):
     """
     try:
         client = MongoClient(ip, port)
+        logger.info("MongoDB connection successful.")
         return client, "MongoDB connection successful."
     except ConnectionFailure as e:
+        logger.error(f"MongoDB connection failed: {e}")
         return None, f"MongoDB connection failed: {e}"
     except Exception as e:
+        logger.error(f"An error occurred: {e}")
         return None, f"An error occurred: {e}"
 
 
@@ -49,3 +55,20 @@ def get_collections(database):
     :return: List of collection names
     """
     return database.list_collection_names()
+
+
+def get_data_from_collection(collection, query={}):
+    """
+    Retrieves data from a specified collection using a query.
+
+    :param collection: The collection object from which to retrieve the data.
+    :param query: A dictionary specifying the query conditions. Defaults to an empty dict, which retrieves all documents.
+    :return: A list of documents matching the query.
+    """
+    try:
+        documents = list(collection.find(query))
+        logger.info(f"Retrieved {len(documents)} documents from collection '{collection.name}'.")
+        return documents
+    except Exception as e:
+        logger.error(f"Failed to retrieve data from collection '{collection.name}': {e}")
+        return []

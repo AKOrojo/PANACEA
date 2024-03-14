@@ -8,13 +8,11 @@ def main():
     if client is None:
         return
 
-    # Get a database
     database = get_database(client, 'enron')
-
-    # Get a specific collection from the database
     collection = get_collection(database, 'messages')
-    print(f"Working with collection: {collection.name}")
 
+    documents = get_data_from_collection(collection)
+    print(documents)
 
 if __name__ == '__main__':
     main()
