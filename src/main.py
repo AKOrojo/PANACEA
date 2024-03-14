@@ -1,4 +1,6 @@
-from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection, get_data_from_collection
+from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection, \
+    get_data_from_collection
+from src.unifying_model.mapper import map_data_unit
 
 
 def main():
@@ -12,6 +14,14 @@ def main():
 
     documents = get_data_from_collection(collection)
     print(documents)
+
+    # Map each document using map_data_unit
+    mapped_documents = []
+    for document in documents:
+        mapped_document = map_data_unit(document)
+        mapped_documents.extend(mapped_document)
+
+    print(mapped_documents)
 
 
 if __name__ == '__main__':
