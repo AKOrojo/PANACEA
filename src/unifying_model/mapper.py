@@ -24,3 +24,6 @@ def map_data_unit(data_unit):
         key_value_pairs.append((f'{doc_id}:{key}', serialized_value))
 
     return key_value_pairs
+
+def ss():
+    pass
