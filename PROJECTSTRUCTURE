@@ -21,7 +21,6 @@ NoSQL_Access_Control_Evaluation/
 │   ├── view_generation/
 │   │   ├── __init__.py
 │   │   ├── mapper.py           # Code to map unified model data back to native models
-│   │   ├── reducer.py          # Code to reduce and finalize the view generation
 │   │   └── projector.py        # Code to project the final views based on policy evaluation
 │   │
 │   ├── database_interaction/
