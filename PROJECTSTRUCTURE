@@ -1,7 +1,7 @@
-PANACEA - Policy Analysis and NoSQL Access Control Evaluation Approach/
+NoSQL_Access_Control_Evaluation/
 │
 ├── data/
-│   ├── input/                  # For storing input datasets and NoSQL system dumps - JSON
+│   ├── input/                  # For storing input datasets and NoSQL system
 │   └── output/                 # For storing processed outputs and views
 │
 ├── docs/
@@ -23,6 +23,11 @@ PANACEA - Policy Analysis and NoSQL Access Control Evaluation Approach/
 │   │   ├── mapper.py           # Code to map unified model data back to native models
 │   │   ├── reducer.py          # Code to reduce and finalize the view generation
 │   │   └── projector.py        # Code to project the final views based on policy evaluation
+│   │
+│   ├── database_interaction/
+│   │   ├── __init__.py
+│   │   ├── mongo_connection.py # Establishes connection to MongoDB and fetches data
+│   │   └── data_preparation.py # Prepares data for MapReduce processing
 │   │
 │   ├── utils/
 │   │   ├── __init__.py
