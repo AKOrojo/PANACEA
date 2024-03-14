@@ -57,7 +57,7 @@ def get_collections(database):
     return database.list_collection_names()
 
 
-def get_data_from_collection(collection, query={}):
+def get_data_from_collection(collection, query=None):
     """
     Retrieves data from a specified collection using a query.
 
@@ -65,6 +65,8 @@ def get_data_from_collection(collection, query={}):
     :param query: A dictionary specifying the query conditions. Defaults to an empty dict, which retrieves all documents.
     :return: A list of documents matching the query.
     """
+    if query is None:
+        query = {}
     try:
         documents = list(collection.find(query))
         logger.info(f"Retrieved {len(documents)} documents from collection '{collection.name}'.")
