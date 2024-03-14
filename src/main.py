@@ -1,8 +1,7 @@
-from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection
+from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection, get_data_from_collection
 
 
 def main():
-    # Attempt to connect to MongoDB with default IP and port
     client, message = get_mongo_client(ip='10.100.207.21')
     print(message)
     if client is None:
@@ -13,6 +12,7 @@ def main():
 
     documents = get_data_from_collection(collection)
     print(documents)
+
 
 if __name__ == '__main__':
     main()

@@ -6,6 +6,7 @@ logging.basicConfig(level=logging.INFO,
                     filename='application.log',
                     filemode='a')
 
+
 def get_logger(name):
     """
     Returns a logger with the specified name. This function ensures that

@@ -33,6 +33,7 @@ NoSQL_Access_Control_Evaluation/
 │   │   ├── __init__.py
 │   │   ├── mapreduce_utils.py  # Utilities to support MapReduce operations
 │   │   └── data_utils.py       # General data handling utilities
+|   |   └── log_config.py       # Logging config for application logs
 │   │
 │   └── main.py                 # Main script to run the entire evaluation process
 │
