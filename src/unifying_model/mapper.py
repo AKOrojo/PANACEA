@@ -33,7 +33,7 @@ def duMapper(document_id, parent_path, obj, results):
                 results.append({
                     "_id": component_id,
                     "value": {
-                        "path": parent_path if parent_path else [document_id],
+                        "path": [document_id] if not parent_path else [document_id] + parent_path,
                         "id": component_id,
                         "K": k,
                     }
@@ -44,7 +44,7 @@ def duMapper(document_id, parent_path, obj, results):
                 results.append({
                     "_id": component_id,
                     "value": {
-                        "path": parent_path if parent_path else [document_id],
+                        "path": [document_id] if not parent_path else [document_id] + parent_path,
                         "id": component_id,
                         "K": k,
                         "V": v
