@@ -49,6 +49,7 @@ def main():
     security_urps = split_and_bind_policies_to_urp(mapped_documents, "body", security_metadata_variations,
                                                    policy_variations, split_count)
     print(security_urps)
+    print(security_urps)
 
 if __name__ == '__main__':
     main()
