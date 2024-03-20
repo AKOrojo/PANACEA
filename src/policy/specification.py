@@ -1,32 +1,39 @@
-def split_and_bind_policies_to_urp(mapping_results, field_name, security_metadata_variations, policy_variations,
-                                   split_count):
+def split_and_bind_policies_to_urp(mapping_results, field_names, security_metadata_variations, policy_variations, split_count):
     """
-    Splits URPs into specified groups and binds varying security metadata and policies to each group. Returns the updated mappings.
+    Splits URPs into specified groups and binds varying security metadata and policies to each group, ensuring that
+    entries from the same tree are assigned to the same group and receive the same security metadata and policies.
 
-    :param mapping_results: The list of mappings produced by the m function.
-    :param field_name: The name of the field to which the security metadata and policies should be applied.
-    :param security_metadata_variations: A list of dictionaries, each containing security metadata for a group.
-    :param policy_variations: A list of lists of dictionaries, each representing the policies to be applied to a group.
+    :param mapping_results: The list of mappings.
+    :param field_names: A single field name or a list of field names.
+    :param security_metadata_variations: A list of dictionaries for security metadata.
+    :param policy_variations: A list of lists of dictionaries for policies.
     :param split_count: The number of groups to split the URPs into.
-    :return: A list of updated mappings with the new security metadata and policies applied.
+    :return: The updated mapping_results with applied policies and metadata.
     """
-    updated_mappings = []  # Initialize a list to store updated mappings
-    # Filter URPs by field name
-    relevant_urps = [entry for entry in mapping_results if entry['value'].get('K') == field_name]
+    if isinstance(field_names, str):
+        field_names = [field_names]
 
-    urps_per_group = max(1, len(relevant_urps) // split_count)
+    # Initialize containers for global processing
+    tree_to_entries = {}
+    for entry in mapping_results:
+        tree_path = tuple(entry['value']['path'])
+        if entry['value'].get('K') in field_names:
+            if tree_path not in tree_to_entries:
+                tree_to_entries[tree_path] = []
+            tree_to_entries[tree_path].append(entry)
 
-    for i, entry in enumerate(relevant_urps):
+    # Flatten the list of entries to ensure global ordering while preserving tree grouping
+    all_relevant_entries = [entry for entries in tree_to_entries.values() for entry in entries]
+    total_relevant_entries = len(all_relevant_entries)
+    urps_per_group = max(1, total_relevant_entries // split_count)
+
+    # Assign entries to groups, ensuring same-tree entries are in the same group
+    for i, entry in enumerate(all_relevant_entries):
         group_index = i // urps_per_group
         group_index = min(group_index, len(security_metadata_variations) - 1, len(policy_variations) - 1)
 
-        # Copy the entry to avoid modifying the original mapping_results
-        updated_entry = entry.copy()
-        # Assign security metadata and policies based on group
-        updated_entry['value']['meta'] = security_metadata_variations[group_index]
-        updated_entry['value']['pol'] = policy_variations[group_index]
+        # Apply the same security metadata and policies to entries in the same group
+        entry['value']['meta'] = security_metadata_variations[group_index]
+        entry['value']['pol'] = policy_variations[group_index]
 
-        # Add the updated entry to the list of updated mappings
-        updated_mappings.append(updated_entry)
-
-    return updated_mappings
+    return mapping_results
