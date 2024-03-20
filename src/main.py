@@ -2,6 +2,7 @@ from src.database_interactions.mongo_connection import get_mongo_client, get_dat
     get_data_from_collection
 from src.policy.specification import split_and_bind_policies_to_urp
 from src.unifying_model.mapper import m
+from src.view_generation.remodeler import reduce_by_key, finalize, remodelerMap
 
 
 def main():
@@ -48,8 +49,13 @@ def main():
     split_count = 5
     security_urps = split_and_bind_policies_to_urp(mapped_documents, "body", security_metadata_variations,
                                                    policy_variations, split_count)
-    print(security_urps)
-    print(security_urps)
+
+    grouped_urps = remodelerMap(security_urps)
+    reduced_data_units = {key: reduce_by_key(urps, key) for key, urps in grouped_urps.items()}
+    finalized_data_units = {key: finalize(du) for key, du in reduced_data_units.items()}
+
+    print(finalized_data_units)
+
 
 if __name__ == '__main__':
     main()
