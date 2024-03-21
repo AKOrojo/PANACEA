@@ -2,6 +2,7 @@ from src.database_interactions.mongo_connection import get_mongo_client, get_dat
     get_data_from_collection
 from src.policy.specification import split_and_bind_policies_to_urp
 from src.unifying_model.mapper import m
+from src.view_generation.projector import apply_policies_to_du
 from src.view_generation.remodeler import reduce_by_key, finalize, remodelerMap
 
 
@@ -55,6 +56,14 @@ def main():
     finalized_data_units = {key: finalize(du) for key, du in reduced_data_units.items()}
 
     print(finalized_data_units)
+
+    # Simulation
+    ppc = "most-specific-overrides"
+    crs = "denials-take-precedence"
+    st = "open"
+
+    finalized_du_with_policies = apply_policies_to_du(finalized_data_units, ppc, crs, st)
+    print(finalized_du_with_policies)
 
 
 if __name__ == '__main__':
