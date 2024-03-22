@@ -1,3 +1,8 @@
+from src.utils.log_config import get_logger
+
+logger = get_logger(__name__)
+
+
 def remodelerMap(urps):
     """
         Groups Unifying Resource Properties (URPs) by their data unit identifier.
@@ -123,7 +128,7 @@ def finalize(du):
     - du: The data unit being finalized.
     """
     if 'tbs' not in du or 'tbp' not in du:
-        print("Missing 'tbs' or 'tbp' in data unit.")
+        logger.info("Missing 'tbs' or 'tbp' in data unit.")
         return du
 
     # Resolve placeholders specified within 'tbs'

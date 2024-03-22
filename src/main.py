@@ -62,8 +62,6 @@ def main():
     st = "open"
 
     finalized_du_with_policies = apply_policies_to_du(finalized_data_units, ppc, crs, st)
-    print(finalized_du_with_policies)
-
     detect_and_print_conflicts(finalized_du_with_policies)
 
     # # Security metadata variations (for demonstration, these remain the same across variations)
