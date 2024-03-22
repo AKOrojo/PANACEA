@@ -50,7 +50,16 @@ def detect_and_print_conflicts(data_units):
                 detect_conflicts_in_du(value, current_decision, level + 1, new_path)
 
     # Iterate through each data unit and check for conflicts
-    for id, du in data_units.items():
+    for data_units_id, du in data_units.items():
+        if not isinstance(du, dict):
+            print(
+                f"Expected a dictionary for the data unit but got a different type. Data unit ID: {data_units_id}, "
+                f"Content: {du}")
+            continue
+
         du_id = du.get('_id')
-        print(f"Checking data unit with ID: {du_id}")
+        logger.info(f"Checking data unit with ID: {du_id}")
+
+
+
         detect_conflicts_in_du(du)
