@@ -9,7 +9,6 @@ from src.view_generation.remodeler import reduce_by_key, finalize, remodelerMap
 
 def main():
     client, message = get_mongo_client(ip='10.100.207.21')
-    print(message)
     if client is None:
         return
 
