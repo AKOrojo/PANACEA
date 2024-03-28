@@ -3,8 +3,8 @@ import logging
 # Configure logging at the root level of the application
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    filename='application.log',
-                    filemode='a')
+                    filename='utils/application.log',
+                    filemode='w')
 
 
 def get_logger(name):

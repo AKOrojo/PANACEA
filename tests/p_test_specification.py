@@ -71,6 +71,7 @@ class TestSplitAndBindPoliciesToURP(unittest.TestCase):
         # Apply the function
         result = split_and_bind_policies_to_urp(mapping_results, field_names, security_metadata_variations,
                                                 policy_variations, split_count)
+        print(result)
 
         doc1_meta_policies = [(entry['value'].get('meta'), entry['value'].get('pol')) for entry in result if
                               entry['value']['path'] == ['doc1']]

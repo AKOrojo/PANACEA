@@ -1,7 +1,3 @@
-from src.utils.log_config import get_logger
-
-logger = get_logger(__name__)
-
 
 def remodelerMap(urps):
     """
@@ -128,7 +124,6 @@ def finalize(du):
     - du: The data unit being finalized.
     """
     if 'tbs' not in du or 'tbp' not in du:
-        logger.info("Missing 'tbs' or 'tbp' in data unit.")
         return du
 
     # Resolve placeholders specified within 'tbs'

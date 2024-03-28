@@ -1,10 +1,14 @@
 from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection, \
     get_data_from_collection
-from src.policy.specification import split_and_bind_policies_to_urp, split_and_bind_policies_with_conflicts
+from src.policy.specification import split_and_bind_policies_to_urp
 from src.unifying_model.mapper import m
-from src.utils.util_functions import detect_and_print_conflicts
+from src.utils.log_config import get_logger
+from src.utils.util_functions import detect_and_print_conflicts, write_urp_to_file, clear_or_create_file, \
+    write_security_urp_to_file, write_finalized_data_units_to_file
 from src.view_generation.projector import apply_policies_to_du
 from src.view_generation.remodeler import reduce_by_key, finalize, remodelerMap
+
+logger = get_logger(__name__)
 
 
 def main():
@@ -21,6 +25,11 @@ def main():
     for document in documents:
         mapped_document = m(document)
         mapped_documents.extend(mapped_document)
+
+    clear_or_create_file('unifying_model/urpS.log')
+
+    for urp in mapped_documents:
+        write_urp_to_file(urp, 'unifying_model/urpS.log')
 
     security_metadata_variations = [
         [{"aip": ["research"]}],
@@ -51,9 +60,17 @@ def main():
     security_urps = split_and_bind_policies_to_urp(mapped_documents, "body", security_metadata_variations,
                                                    policy_variations, split_count)
 
+    clear_or_create_file('policy/security_urp.log')
+    for security_urp in security_urps:
+        write_security_urp_to_file(security_urp, 'policy/security_urp.log')
+
     grouped_urps = remodelerMap(security_urps)
     reduced_data_units = {key: reduce_by_key(urps, key) for key, urps in grouped_urps.items()}
     finalized_data_units = {key: finalize(du) for key, du in reduced_data_units.items()}
+
+    for du in finalized_data_units.items():
+        print(du)
+    write_finalized_data_units_to_file(finalized_data_units, 'view_generation/finalized_data_units.log')
 
     # Simulation
     ppc = "most-specific-overrides"
