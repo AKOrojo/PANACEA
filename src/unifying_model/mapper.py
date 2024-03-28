@@ -53,7 +53,7 @@ def duMapper(document_id, parent_path, obj, results, file_path):
         pass
 
 
-def m(document, file_path):
+def m(document, file_path='urpS.log'):
     """
     Entry point for mapping a document to unifying resource properties.
     :param document: The document to map.
