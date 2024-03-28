@@ -24,6 +24,37 @@ def print_urp(urp):
         print(f"URP does not have the expected structure: {urp}")
 
 
+def clear_or_create_file(file_path='urpS.log'):
+    """
+    Clears the content of the given file or creates it if it doesn't exist.
+
+    :param file_path: The path to the file to be cleared or created.
+    """
+    open(file_path, 'w').close()
+
+
+def write_urp_to_file(urp, file_path='urpS.log'):
+    """
+    Writes a Unifying Resource Property (URP) to a file in a structured and readable format.
+    Appends URPs to the file, assuming the file was cleared at the beginning of the operation.
+
+    :param urp: The URP dictionary to write.
+    :param file_path: The path to the file where the URP should be written.
+    """
+    with open(file_path, 'a') as file:  # Open the file in append mode
+        if 'value' in urp:
+            value_str = "{\n"
+            value_str += f"  'path': {urp['value'].get('path', [])},\n"
+            value_str += f"  'id': '{urp['value'].get('id', 'Unknown')}',\n"
+            value_str += f"  'K': '{urp['value'].get('K', 'Unknown')}',\n"
+            if 'V' in urp['value']:
+                value_str += f"  'V': '{urp['value'].get('V', 'Unknown')}'\n"
+            value_str += "}"
+            file.write(f"{{'_id': '{urp.get('_id', 'Unknown')}',\n'value': {value_str}}}\n\n")
+        else:
+            file.write(f"URP does not have the expected structure: {urp}\n\n")
+
+
 def detect_and_print_conflicts(data_units):
     """
     Detects potential conflicts within data units based on varying access decisions
@@ -40,13 +71,15 @@ def detect_and_print_conflicts(data_units):
         if isinstance(du, dict):
             current_decision = du.get('access_decision')
             if parent_decision and current_decision and parent_decision != current_decision:
-                logger.info(f"Conflict detected at '{path}': Parent decision '{parent_decision}' vs Current decision '{current_decision}'")
+                logger.info(
+                    f"Conflict detected at '{path}': Parent decision '{parent_decision}' vs Current decision '{current_decision}'")
             for key, value in du.items():
                 new_path = f"{path} -> {key}"
                 detect_conflicts_in_du(value, current_decision, new_path)
         elif isinstance(du, str) and path.endswith('access_decision'):
             if parent_decision and parent_decision != du:
-                logger.error(f"Conflict detected at '{path}': Parent decision '{parent_decision}' vs Current decision '{du}'")
+                logger.error(
+                    f"Conflict detected at '{path}': Parent decision '{parent_decision}' vs Current decision '{du}'")
                 print(f"Conflict detected at '{path}': Parent decision '{parent_decision}' vs Current decision '{du}'")
 
     for du_key, du_value in data_units.items():
