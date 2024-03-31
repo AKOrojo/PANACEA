@@ -1,5 +1,5 @@
 from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection, \
-    get_data_from_collection
+    get_data_from_collection, generate_node_id
 from src.policy.specification import split_and_bind_policies_to_urp
 from src.unifying_model.mapper import m
 from src.utils.log_config import get_logger
@@ -12,8 +12,15 @@ logger = get_logger(__name__)
 
 
 def main():
-    client, message = get_mongo_client(ip='10.100.207.21')
-    if client is None:
+    ip = '10.100.207.21'
+    port = 27017
+
+    client, message = get_mongo_client(ip=ip, port=port)
+    if client:
+        node_id = generate_node_id(client, ip, port)
+        logger.info(f"Node ID: {node_id}")
+    else:
+        logger.error(f"Failed to connect to MongoDB.")
         return
 
     database = get_database(client, 'enron')
@@ -23,7 +30,7 @@ def main():
     # Map documents to the unified model
     mapped_documents = []
     for document in documents:
-        mapped_document = m(document)
+        mapped_document = m(document, node_id)
         mapped_documents.extend(mapped_document)
 
     clear_or_create_file('unifying_model/urpS.log')

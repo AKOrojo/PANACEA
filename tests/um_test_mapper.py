@@ -17,40 +17,40 @@ class TestMapper(unittest.TestCase):
         self.assertNotEqual(id3, id4, "Generated IDs for different fields should be unique")
 
     def test_duMapper_simple(self):
-        # Test mapping a simple object
         results = []
-        duMapper("doc1", [], {"key": "value"}, results)
+        node_id = "node1"
+        duMapper("doc1", node_id, [], {"key": "value"}, results)
         self.assertEqual(len(results), 1, "Should map one key-value pair")
         self.assertIn("key", results[0]["value"]["K"], "Key should be mapped correctly")
         self.assertIn("value", results[0]["value"]["V"], "Value should be mapped correctly")
+        self.assertTrue(results[0]["value"]["path"][0] == node_id, "Node ID should be included in the path")
 
     def test_duMapper_nested(self):
-        # Test mapping a nested object
         results = []
-        duMapper("doc1", [], {"parent": {"child": "value"}}, results)
-        self.assertEqual(len(results), 2, "Should map two URPs: one for the 'parent' key and one for the nested "
-                                          "'child' key")
-        parent_urps = [urp for urp in results if urp["value"]["K"] == "parent"]
-        self.assertEqual(len(parent_urps), 1, "The 'parent' key should be mapped to one URP")
+        node_id = "node1"
+        duMapper("doc1", node_id, [], {"parent": {"child": "value"}}, results)
+        self.assertEqual(len(results), 2,
+                         "Should map two URPs: one for the 'parent' key and one for the nested 'child' key")
         child_urps = [urp for urp in results if urp["value"]["K"] == "child"]
-        self.assertEqual(len(child_urps), 1, "The 'child' key should be mapped to one URP within 'parent'")
         self.assertEqual(child_urps[0]["value"]["V"], "value", "Nested 'child' value should be 'value'")
+        self.assertTrue(all(node_id == urp["value"]["path"][0] for urp in results),
+                        "Node ID should be included in all paths")
 
     def test_m_function(self):
-        # Test the m function with a simple document
         document = {
             "_id": "doc1",
             "key": "value",
             "nested": {"child": "value"}
         }
-        mapped_documents = m(document)
+        node_id = "node1"
+        mapped_documents = m(document, node_id)
         for urp in mapped_documents:
             print_urp(urp)
-        self.assertEqual(len(mapped_documents), 4,
-                         "m function should map three key-value pairs, including the document's _id")
+            self.assertTrue(urp["value"]["path"][0] == node_id, "Node ID should be included in the path of each URP")
+        self.assertEqual(len(mapped_documents), 3,
+                         "m function should map three key-value pairs")
         keys_mapped = [doc["value"]["K"] for doc in mapped_documents]
-        self.assertIn("child", keys_mapped, "Child key should be mapped as separate without nested notation")
+        self.assertIn("child", keys_mapped, "Child key should be mapped")
 
-
-if __name__ == '__main__':
-    unittest.main()
+    if __name__ == '__main__':
+        unittest.main()

@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from src.utils.log_config import get_logger
+import hashlib
 
 logger = get_logger(__name__)
 
@@ -74,3 +75,31 @@ def get_data_from_collection(collection, query=None):
     except Exception as e:
         logger.error(f"Failed to retrieve data from collection '{collection.name}': {e}")
         return []
+
+
+def generate_node_id(client, ip, port):
+    """
+    Generates a unique identifier for a MongoDB node based on its IP, port, and server information.
+
+    :param client: MongoDB client
+    :param ip: The IP address of the MongoDB server.
+    :param port: The port on which the MongoDB server is running.
+    :return: A SHA-256 hash as a unique node identifier, or None if an error occurs.
+    """
+    try:
+        # Retrieve server information
+        server_info = client.server_info()
+
+        # Use relevant parts of server_info for uniqueness
+        unique_info = f"{server_info.get('version', '')}-{server_info.get('gitVersion', '')}"
+
+        # Create a unique identifier string
+        identifier_str = f"{ip}:{port}-{unique_info}"
+
+        # Generate and return the SHA-256 hash of the identifier string
+        node_id = hashlib.sha256(identifier_str.encode('utf-8')).hexdigest()
+        logger.info(f"Generated node ID: {node_id}")
+        return node_id
+    except Exception as e:
+        logger.error(f"Failed to generate node ID: {e}")
+        return None
