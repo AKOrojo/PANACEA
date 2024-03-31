@@ -1,16 +1,7 @@
 from src.utils.log_config import get_logger
-import json
-from bson import ObjectId
+
 
 logger = get_logger(__name__)
-
-
-class CustomEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, ObjectId):
-            return str(obj)  # Convert ObjectId to string
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
 
 
 def write_finalized_data_units_to_file(finalized_data_unit, file_path):
