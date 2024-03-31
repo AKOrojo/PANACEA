@@ -13,18 +13,15 @@ class CustomEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def write_finalized_data_units_to_file(finalized_data_units, file_path):
+def write_finalized_data_units_to_file(finalized_data_unit, file_path):
     """
     Writes each finalized data unit to its own line in a file, handling special types like ObjectId.
 
     :param finalized_data_units: A dictionary containing all finalized data units.
     :param file_path: The path to the file where the finalized data units should be written.
     """
-    with open(file_path, 'w') as f:
-        for _, data_unit in finalized_data_units.items():
-            # Serialize each data unit with custom handling for ObjectId
-            serialized_data_unit = json.dumps(data_unit, cls=CustomEncoder)
-            f.write(serialized_data_unit + '\n')  # Write each unit on its own line
+    with open(file_path, 'a') as file:
+        file.write(str(finalized_data_unit) + '\n')
 
 
 def print_urp(urp):

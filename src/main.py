@@ -68,9 +68,9 @@ def main():
     reduced_data_units = {key: reduce_by_key(urps, key) for key, urps in grouped_urps.items()}
     finalized_data_units = {key: finalize(du) for key, du in reduced_data_units.items()}
 
-    for du in finalized_data_units.items():
-        print(du)
-    write_finalized_data_units_to_file(finalized_data_units, 'view_generation/finalized_data_units.log')
+    clear_or_create_file('view_generation/finalized_data_units.log')
+    for finalized_data_unit in finalized_data_units.items():
+        write_finalized_data_units_to_file(finalized_data_unit, 'view_generation/finalized_data_units.log')
 
     # Simulation
     ppc = "most-specific-overrides"
