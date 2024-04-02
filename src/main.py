@@ -89,8 +89,6 @@ def main():
     finalized_du_with_policies = apply_policies_to_du(finalized_data_units, ppc, crs, st)
     detect_and_print_conflicts(finalized_du_with_policies)
 
-    r
-
 
 if __name__ == '__main__':
     main()
