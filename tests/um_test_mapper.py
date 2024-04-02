@@ -62,6 +62,7 @@ class TestMapper(unittest.TestCase):
             }
         }
         results = []
+
         node_id = "node1"
         mapped_document = m(document, node_id)
         results.extend(mapped_document)
@@ -71,6 +72,7 @@ class TestMapper(unittest.TestCase):
 
         longest_path_length = max(len(result['value']['path']) for result in results)
         self.assertEqual(longest_path_length, 4, "The longest path should contain 4 IDs")
+
 
     if __name__ == '__main__':
         unittest.main()

@@ -3,6 +3,7 @@ import random
 
 def split_and_bind_policies_to_urp(mapping_results, field_names, security_metadata_variations, policy_variations,
                                    split_count):
+
     """
     Splits URPs into specified groups and binds varying security metadata and policies to each group, ensuring that
     entries from the same tree are assigned to the same group and receive the same security metadata and policies.
@@ -65,3 +66,4 @@ def assign_policies_randomly(mapping_results, field_names, security_metadata_var
             entry['value']['pol'] = random.choice(policy_variations[policy_index])
 
     return mapping_results
+

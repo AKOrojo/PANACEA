@@ -1,5 +1,4 @@
-from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection, \
-    get_data_from_collection, generate_node_id
+from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection, get_data_from_collection, generate_node_id
 from src.policy.specification import split_and_bind_policies_to_urp, assign_policies_randomly
 from src.unifying_model.mapper import m
 from src.utils.log_config import get_logger
@@ -66,6 +65,9 @@ def main():
     split_count = 5
     security_urps = split_and_bind_policies_to_urp(mapped_documents, "body", security_metadata_variations,
                                                    policy_variations, split_count)
+    # security_urps = assign_policies_randomly(mapped_documents, "body", security_metadata_variations,
+    #                                          policy_variations)
+
     # security_urps = assign_policies_randomly(mapped_documents, "body", security_metadata_variations,
     #                                          policy_variations)
 
