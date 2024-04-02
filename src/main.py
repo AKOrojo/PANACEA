@@ -1,6 +1,6 @@
 from src.database_interactions.mongo_connection import get_mongo_client, get_database, get_collection, \
     get_data_from_collection, generate_node_id
-from src.policy.specification import split_and_bind_policies_to_urp
+from src.policy.specification import split_and_bind_policies_to_urp, assign_policies_randomly
 from src.unifying_model.mapper import m
 from src.utils.log_config import get_logger
 from src.utils.util_functions import detect_and_print_conflicts, write_urp_to_file, clear_or_create_file, \
@@ -66,6 +66,8 @@ def main():
     split_count = 5
     security_urps = split_and_bind_policies_to_urp(mapped_documents, "body", security_metadata_variations,
                                                    policy_variations, split_count)
+    # security_urps = assign_policies_randomly(mapped_documents, "body", security_metadata_variations,
+    #                                          policy_variations)
 
     clear_or_create_file('policy/security_urp.log')
     for security_urp in security_urps:
@@ -87,52 +89,7 @@ def main():
     finalized_du_with_policies = apply_policies_to_du(finalized_data_units, ppc, crs, st)
     detect_and_print_conflicts(finalized_du_with_policies)
 
-    # # Security metadata variations (for demonstration, these remain the same across variations)
-    # security_metadata_variations = [
-    #     [{"aip": ["research"]}],
-    #     [{"aip": ["administration"]}],
-    #     [{"aip": ["marketing"]}],
-    #     [{"aip": ["finance"]}],
-    #     [{"aip": ["engineering"]}],
-    # ]
-    #
-    # # Policy variations that permit access based on certain criteria
-    # policy_variations = [
-    #     [{"exp": "s.ap in meta.aip and s.role == 'Manager'", "tp": "positive"}],  # Permit for managers in research
-    #     [{"exp": "s.ap in meta.aip and s.department == 'Admin'", "tp": "positive"}],
-    #     # Permit for Admin department in administration
-    #     [{"exp": "s.ap in meta.aip and s.time == 'BusinessHours'", "tp": "positive"}],
-    #     # Permit during business hours for marketing
-    #     [{"exp": "s.ap in meta.aip and s.level >= 5", "tp": "positive"}],  # Permit for level >= 5 in finance
-    #     [{"exp": "s.ap in meta.aip and s.project == 'ProjectX'", "tp": "positive"}],
-    #     # Permit for Project X in engineering
-    # ]
-    #
-    # # Conflicting policy variations that deny access for the same criteria
-    # conflict_variations = [
-    #     [{"exp": "s.ap in meta.aip and s.role == 'Manager'", "tp": "negative"}],
-    #     [{"exp": "s.ap in meta.aip and s.department == 'Admin'", "tp": "negative"}],
-    #     [{"exp": "s.ap in meta.aip and s.time == 'BusinessHours'", "tp": "negative"}],
-    #     [{"exp": "s.ap in meta.aip and s.level >= 5", "tp": "negative"}],
-    #     [{"exp": "s.ap in meta.aip and s.project == 'ProjectX'", "tp": "negative"}],
-    # ]
-    #
-    # # Specify the number of groups to split the URPs into (matching the number of variations)
-    # split_count = 5
-    #
-    # # Bind the policies to the URPs, introducing potential conflicts
-    # security_urps_with_conflicts = split_and_bind_policies_with_conflicts(
-    #     mapped_documents,
-    #     "body",
-    #     security_metadata_variations,
-    #     policy_variations,
-    #     conflict_variations,
-    #     split_count
-    # )
-    #
-    # # Example output inspection
-    # for urp in security_urps_with_conflicts:
-    #     print(urp["value"])
+    r
 
 
 if __name__ == '__main__':
