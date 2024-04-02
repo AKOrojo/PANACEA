@@ -47,10 +47,30 @@ class TestMapper(unittest.TestCase):
         for urp in mapped_documents:
             print_urp(urp)
             self.assertTrue(urp["value"]["path"][0] == node_id, "Node ID should be included in the path of each URP")
-        self.assertEqual(len(mapped_documents), 3,
-                         "m function should map three key-value pairs")
+        self.assertEqual(len(mapped_documents), 4,
+                         "m function should map four key-value pairs")
         keys_mapped = [doc["value"]["K"] for doc in mapped_documents]
         self.assertIn("child", keys_mapped, "Child key should be mapped")
+
+    def test_longest_path_three_ids(self):
+        document = {
+            "_id": "doc1",
+            "level1": {
+                "level2": {
+                    "level3": "value"
+                }
+            }
+        }
+        results = []
+        node_id = "node1"
+        mapped_document = m(document, node_id)
+        results.extend(mapped_document)
+
+        for urp in results:
+            print_urp(urp)
+
+        longest_path_length = max(len(result['value']['path']) for result in results)
+        self.assertEqual(longest_path_length, 4, "The longest path should contain 4 IDs")
 
     if __name__ == '__main__':
         unittest.main()

@@ -16,9 +16,10 @@ def generate_unique_id(*args):
     return hash_object.hexdigest()
 
 
-def duMapper(document_id, node_id, parent_path, obj, results):
+def duMapper(document_id, node_id, parent_path, obj, results, is_root=True):
     """
     Recursively maps an object (or part of it) to unifying resource properties.
+    :param is_root:
     :param document_id: The ID of the document being processed.
     :param node_id: The unique node ID to be prepended to the path.
     :param parent_path: List of parent IDs leading to this object.
@@ -29,30 +30,32 @@ def duMapper(document_id, node_id, parent_path, obj, results):
     if isinstance(obj, dict):
         for k, v in obj.items():
             component_id = generate_unique_id(document_id, k, *parent_path)
-            new_path = parent_path + [component_id]
-            full_path = [node_id] + [document_id] if not parent_path else [node_id, document_id] + parent_path
+            if is_root:
+                new_path = [node_id] + parent_path + [component_id]
+            else:
+                new_path = parent_path + [component_id]
 
-        if isinstance(v, dict):
-            results.append({
-                "_id": component_id,
-                "value": {
-                    "path": [document_id] if not parent_path else [document_id] + parent_path,
-                    "id": full_path,
-                    "K": k,
-                }
-            })
-
-            duMapper(document_id, node_id, new_path, v, results)
-        else:
-            results.append({
-                "_id": component_id,
-                "value": {
-                    "path": full_path,
-                    "id": component_id,
-                    "K": k,
-                    "V": v
-                }
-            })
+            if isinstance(v, dict):
+                results.append({
+                    "_id": component_id,
+                    "value": {
+                        "path": [node_id, component_id] if is_root else new_path[:-1],
+                        "id": component_id,
+                        "K": k,
+                    }
+                })
+                # Pass is_root=False to indicate this is not the first level of recursion
+                duMapper(document_id, node_id, new_path, v, results, is_root=False)
+            else:
+                results.append({
+                    "_id": component_id,
+                    "value": {
+                        "path": new_path,
+                        "id": component_id,
+                        "K": k,
+                        "V": v
+                    }
+                })
     else:
         print(f"Non-dictionary object encountered: {obj} at path {'->'.join(parent_path)}")
         pass
