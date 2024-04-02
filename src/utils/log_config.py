@@ -1,9 +1,11 @@
 import logging
 
 # Configure logging at the root level of the application
+# Absolute path for the log file
+log_file_path = '/home/resbears/PycharmProjects/PANACEA/src/utils/application.log'
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    filename='utils/application.log',
+                    filename=log_file_path,
                     filemode='w')
 
 

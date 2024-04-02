@@ -51,6 +51,25 @@ class TestMapper(unittest.TestCase):
         keys_mapped = [doc["value"]["K"] for doc in mapped_documents]
         self.assertIn("child", keys_mapped, "Child key should be mapped as separate without nested notation")
 
+    def test_longest_path_three_ids(self):
+        document = {
+            "_id": "doc1",
+            "level1": {
+                "level2": {
+                    "level3": "value"
+                }
+            }
+        }
+        results = []
+        mapped_document = m(document)
+        results.extend(mapped_document)
+
+        for urp in results:
+            print_urp(urp)
+
+        longest_path_length = max(len(result['value']['path']) for result in results)
+        self.assertEqual(longest_path_length, 3, "The longest path should contain 3 IDs")
+
 
 if __name__ == '__main__':
     unittest.main()
