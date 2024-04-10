@@ -1,4 +1,3 @@
-
 def remodelerMap(urps):
     """
         Groups Unifying Resource Properties (URPs) by their data unit identifier.
@@ -24,7 +23,7 @@ def remodelerMap(urps):
     return grouped_urps
 
 
-def setField(du, key, value, path, tbs, tbp):
+def setField(du, key, value):
     """
     Sets a field in the data unit 'du', handling hierarchical structures and placeholders.
 
@@ -32,26 +31,12 @@ def setField(du, key, value, path, tbs, tbp):
     - du: The data unit being constructed.
     - key: The field key to set in 'du'.
     - value: The value for the field key.
-    - path: The hierarchical path leading to where the field should be set.
-    - tbs: Temporary buffer for fields that are directly set and might need resolution.
-    - tbp: Temporary buffer for placeholders that need to be placed into their parent structure.
     """
+    du[key] = value
 
-    current_position = du
-    for segment in path[:-1]:
-        if segment not in current_position:
-            current_position[segment] = {}
-        current_position = current_position[segment]
 
-    if value is None:
-        if key not in tbp:
-            tbp.append(key)
-    else:
-        current_position[key] = value
-        if key in tbp:
-            tbp.remove(key)
-        else:
-            tbs[key] = value
+def last_path(path):
+    return path[-1]
 
 
 def reduce_by_key(urpS, key):
@@ -67,24 +52,32 @@ def reduce_by_key(urpS, key):
     - A structured data unit with fields set according to the URPs, including resolved placeholders.
     """
     du = {}
-    tbs = {}
+    tbs = []
     tbp = []
 
     for urp in urpS:
+        urp_id = urp['value']['id']
         path = urp['value']['path']
         K = urp['value'].get('K')
         V = urp['value'].get('V', None)
+        if last_path(path) == key:
+            if isinstance(V, (int, float, bool, str)):
+                setField(du, K, V)
+            else:
+                setField(du, K, V)
+                tbs.append(urp_id)
+        else:
+            if last_path(path) not in urp:
+                setField(du, last_path(path), {})
+                tbp.append(last_path(path))
+            if isinstance(V, (int, float, bool, str)):
+                setField(du, K, V)
+            else:
+                setField(du, K, urp_id)
+                tbs.append(urp_id)
 
-        setField(du, K, V, path, tbs, tbp)
-
-    for placeholder_key in tbp:
-        if placeholder_key in tbs:
-            current_position = du
-            for part in path[:-1]:
-                if part in current_position:
-                    current_position = current_position[part]
-            if placeholder_key in current_position:
-                current_position[placeholder_key] = tbs[placeholder_key]
+    setField(du, "tbs", tbs)
+    setField(du, "tbp", tbp)
 
     return du
 
