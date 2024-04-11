@@ -1,5 +1,5 @@
 import unittest
-from src.unifying_model.mapper import generate_unique_id, duMapper, m
+from src.unifying_model.mapper import duMapper, m
 from src.utils.util_functions import print_urp
 
 
@@ -38,11 +38,13 @@ class TestMapper(unittest.TestCase):
 
     def test_m_function(self):
         # Test the m function with a simple document
+
         document = {
             "_id": "doc1",
             "key": "value",
             "nested": {"child": "value"}
         }
+
         mapped_documents = m(document)
         for urp in mapped_documents:
             print_urp(urp)
@@ -64,8 +66,8 @@ class TestMapper(unittest.TestCase):
         mapped_document = m(document)
         results.extend(mapped_document)
 
-        for urp in results:
-            print_urp(urp)
+        #for urp in results:
+         #   print_urp(urp)
 
         longest_path_length = max(len(result['value']['path']) for result in results)
         self.assertEqual(longest_path_length, 3, "The longest path should contain 3 IDs")

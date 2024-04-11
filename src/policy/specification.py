@@ -18,26 +18,24 @@ def split_and_bind_policies_to_urp(mapping_results, field_names, security_metada
 
     # Initialize containers for global processing
     tree_to_entries = {}
-    for entry in mapping_results:
-        tree_path = tuple(entry['value']['path'])
-        if entry['value'].get('K') in field_names:
+    for urp_id, urp_value in mapping_results:
+        tree_path = tuple(urp_value['path'][0])
+        if urp_value.get('K') in field_names:
             if tree_path not in tree_to_entries:
                 tree_to_entries[tree_path] = []
-            tree_to_entries[tree_path].append(entry)
+            tree_to_entries[tree_path].append((urp_id, urp_value))
 
-    # Flatten the list of entries to ensure global ordering while preserving tree grouping
     all_relevant_entries = [entry for entries in tree_to_entries.values() for entry in entries]
     total_relevant_entries = len(all_relevant_entries)
     urps_per_group = max(1, total_relevant_entries // split_count)
 
-    # Assign entries to groups, ensuring same-tree entries are in the same group
-    for i, entry in enumerate(all_relevant_entries):
+    for i, (urp_id, urp_value) in enumerate(all_relevant_entries):
         group_index = i // urps_per_group
         group_index = min(group_index, len(security_metadata_variations) - 1, len(policy_variations) - 1)
 
-        # Apply the same security metadata and policies to entries in the same group
-        entry['value']['meta'] = security_metadata_variations[group_index]
-        entry['value']['pol'] = policy_variations[group_index]
+        # Apply the security metadata and policies directly to urp_value
+        urp_value['meta'] = security_metadata_variations[group_index]
+        urp_value['pol'] = policy_variations[group_index]
 
     return mapping_results
 
@@ -55,13 +53,14 @@ def assign_policies_randomly(mapping_results, field_names, security_metadata_var
     if isinstance(field_names, str):
         field_names = [field_names]
 
-    for entry in mapping_results:
-        if entry['value'].get('K') in field_names:
+    for urp_id, urp_value in mapping_results:
+        if urp_value.get('K') in field_names:
             meta_index = random.randint(0, len(security_metadata_variations) - 1)
             policy_index = random.randint(0, len(policy_variations) - 1)
 
-            entry['value']['meta'] = security_metadata_variations[meta_index]
-            entry['value']['pol'] = random.choice(policy_variations[policy_index])
+            # Directly modify urp_value dictionary
+            urp_value['meta'] = security_metadata_variations[meta_index]
+            urp_value['pol'] = random.choice(policy_variations[policy_index])
 
     return mapping_results
 
