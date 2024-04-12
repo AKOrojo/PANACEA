@@ -1,81 +1,98 @@
+import re
 from src.view_generation.remodeler import remodelerMap
+import re
 
 
-def evaluate(pp, arc):
+def evaluate(urp, arc):
     """
-    Evaluates a policy predicate pp against an access request context arc.
+    Evaluates the access control policies specified for a Unifying Resource Property (URP)
+    against the given access request context.
 
     Parameters:
-    - pp (dict): The policy predicate to be evaluated.
-        - pp should have the following structure:
-            {
-                'exp': 'expression to evaluate',
-                'tp': 'positive' or 'negative'
-            }
-    - arc (dict): The access request context, containing parameters like subject and environment.
-        - arc should have the following structure:
-            {
-                's': {'ap': ['research']},
-                'e': {'ip': ['10.0.0.1']}
-            }
+    - urp (dict): A Unifying Resource Property represented as a dictionary.
+    - arc (dict): An access request context containing subject attributes and policies.
 
     Returns:
-    - bool: True if the policy predicate is satisfied, False otherwise.
+    - dict: A dictionary containing the access decisions for different metadata and policy sets.
     """
-    # Extract the expression and type from the policy predicate
-    expression = pp['exp']
-    predicate_type = pp['tp']
+    decisions = {}
 
-    # Evaluate the expression against the access request context
-    try:
-        result = eval(expression, {}, arc)
-    except (NameError, TypeError, SyntaxError):
-        # If there's an error evaluating the expression, return False
-        return False
+    if 'pol' not in urp and 'meta' not in urp:
+        decisions['default'] = 'permit'
+        return decisions
 
-    # Return the result based on the predicate type
-    if predicate_type == 'positive':
-        return result
-    else:
-        return not result
+    # this is dump would break negative urps
+    if not arc:
+        decisions['default'] = 'deny'
+        return decisions
+
+    if 'policies' not in arc:
+        decisions['default'] = 'deny'
+        return decisions
+
+    # Iterate over each metadata and policy set in the URP
+    for i in range(len(urp.get('meta', []))):
+        meta = urp['meta'][i]
+        pol = urp['pol'][i] if 'pol' in urp and i < len(urp['pol']) else []
+
+        set_decision = 'permit'
+
+        for policy in arc['policies']:
+            # Extract the attribute names from the policy expression
+            attributes = re.findall(r's\.(\w+)', policy['exp'])
+
+            # Create a dictionary with the attribute names and their corresponding values from arc['subject']
+            attribute_dict = {attr: arc['subject'].get(attr) for attr in attributes}
+
+            try:
+                # Evaluate the policy expression using the attribute dictionary and meta dictionary
+                if eval(policy['exp'], {'s': attribute_dict, 'meta': meta}):
+                    if policy['tp'] == 'positive':
+                        continue
+                    else:
+                        set_decision = 'deny'
+                        break
+                else:
+                    if policy['tp'] == 'positive':
+                        set_decision = 'deny'
+                        break
+                    else:
+                        continue
+            except AttributeError:
+                # If an attribute is missing, consider it a deny
+                set_decision = 'deny'
+                break
+
+        decisions[f"set_{i}"] = set_decision
+
+    return decisions
 
 
-def combinePs(Ps, co, arc):
+def combinePs(decisions, co):
     """
-    Combines a set of positive and negative policies Ps based on the combining option co.
+    Combines the decisions from multiple policies based on the specified combining option.
 
     Parameters:
-    - Ps (list of dict): A list of policy objects, each containing a policy predicate.
-        - Each policy object should have the following structure:
-            {
-                'exp': 'expression to evaluate',
-                'tp': 'positive' or 'negative'
-            }
-    - co (str): The combining option, either 'any' or 'all'.
-    - arc (dict): The access request context.
+    - decisions (list): A list of access decisions ('permit', 'deny', or 'notApplicable').
+    - co (str): The combining option ('any' or 'all').
 
     Returns:
-    - bool: The combined decision based on the policy predicates and the combining option.
+    - str: The combined access decision ('permit', 'deny', or 'notApplicable').
     """
-    positive_decisions = []
-    negative_decisions = []
-
-    # Evaluate each policy predicate and categorize the decisions
-    for p in Ps:
-        decision = evaluate(p, arc)
-        if p['tp'] == 'positive':
-            positive_decisions.append(decision)
-        else:
-            negative_decisions.append(decision)
-
-    # Combine the decisions based on the combining option
     if co == 'any':
-        return any(positive_decisions) and not any(negative_decisions)
+        if 'permit' in decisions:
+            return 'permit'
+        elif 'deny' in decisions:
+            return 'deny'
+        else:
+            return 'notApplicable'
     elif co == 'all':
-        return all(positive_decisions) and not any(negative_decisions)
-    else:
-        # Return False if the combining option is not supported
-        return False
+        if 'deny' in decisions:
+            return 'deny'
+        elif all(decision == 'permit' for decision in decisions):
+            return 'permit'
+        else:
+            return 'notApplicable'
 
 
 def conflictRes(Ps, crs, arc):
@@ -191,12 +208,8 @@ def projector(urps, co, crs, arc):
 
     # Apply to evaluate, combinePs, and conflictRes functions to the grouped URPs
     results = {}
-    for key, urps_list in grouped_urps.items():
-        policies = [{'exp': 'expression', 'tp': 'positive'}, {'exp': 'expression', 'tp': 'negative'}]
-        evaluation_decision = evaluate(policies, arc)
-        combined_decision = combinePs(policies, co, arc)
-        resolved_decision = conflictRes(policies, crs, arc)
-        results[key] = {'combined_decision': combined_decision, 'resolved_decision': resolved_decision, 'evaluation_decision': evaluation_decision}
+    # for key, urps_list in grouped_urps.items():
+    #     results[key] = {'combined_decision': combined_decision, 'resolved_decision': resolved_decision, 'evaluation_decision': evaluation_decision}
 
     return results
 

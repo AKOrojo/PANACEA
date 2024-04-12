@@ -24,7 +24,6 @@ def remodelerMap(urps):
     return grouped_urps
 
 
-
 def r(urpS, key):
     """
     Reduces a set of URPs by a specific key to structure the data unit.
@@ -67,7 +66,6 @@ def r(urpS, key):
     return du
 
 
-
 def f(du):
     """
     Finalizes the data unit by removing specified fields and updating values.
@@ -99,7 +97,6 @@ def f(du):
     return du
 
 
-
 def updateDu(du, oid, value):
     """
     Recursively updates the data unit, replacing references with actual values.
@@ -121,4 +118,3 @@ def updateDu(du, oid, value):
             updateDu(val, oid, value)
         elif val == oid:  # If the value matches the object identifier, replace it.
             du[key] = value
-
