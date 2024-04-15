@@ -1,6 +1,5 @@
 import re
 from src.view_generation.remodeler import remodelerMap
-import re
 
 
 def evaluate(urp, arc):
@@ -10,62 +9,42 @@ def evaluate(urp, arc):
 
     Parameters:
     - urp (dict): A Unifying Resource Property represented as a dictionary.
-    - arc (dict): An access request context containing subject attributes and policies.
+    - arc (dict): An access request context containing subject attributes.
 
     Returns:
     - dict: A dictionary containing the access decisions for different metadata and policy sets.
     """
     decisions = {}
 
-    if 'pol' not in urp and 'meta' not in urp:
+    if 'meta' not in urp or 'pol' not in urp:
         decisions['default'] = 'permit'
         return decisions
 
-    # this is dump would break negative urps
-    if not arc:
-        decisions['default'] = 'deny'
-        return decisions
-
-    if 'policies' not in arc:
+    if 'subject' not in arc or 'aip' not in arc['subject']:
         decisions['default'] = 'deny'
         return decisions
 
     # Iterate over each metadata and policy set in the URP
-    for i in range(len(urp.get('meta', []))):
+    for i in range(len(urp['meta'])):
         meta = urp['meta'][i]
-        pol = urp['pol'][i] if 'pol' in urp and i < len(urp['pol']) else []
+        pol = urp['pol'][i]
 
-        set_decision = 'permit'
-
-        for policy in arc['policies']:
-            # Extract the attribute names from the policy expression
-            attributes = re.findall(r's\.(\w+)', policy['exp'])
-
-            # Create a dictionary with the attribute names and their corresponding values from arc['subject']
-            attribute_dict = {attr: arc['subject'].get(attr) for attr in attributes}
-
-            try:
-                # Evaluate the policy expression using the attribute dictionary and meta dictionary
-                if eval(policy['exp'], {'s': attribute_dict, 'meta': meta}):
-                    if policy['tp'] == 'positive':
-                        continue
-                    else:
-                        set_decision = 'deny'
-                        break
-                else:
-                    if policy['tp'] == 'positive':
-                        set_decision = 'deny'
-                        break
-                    else:
-                        continue
-            except AttributeError:
-                # If an attribute is missing, consider it a deny
-                set_decision = 'deny'
-                break
+        if pol['exp'] == "s.ap in meta.aip":
+            if arc['subject']['aip'] in meta['aip']:
+                set_decision = 'permit' if pol['tp'] == 'positive' else 'deny'
+            else:
+                set_decision = 'deny' if pol['tp'] == 'positive' else 'permit'
+        elif pol['exp'] == "s.ap not in meta.aip":
+            if arc['subject']['aip'] not in meta['aip']:
+                set_decision = 'permit' if pol['tp'] == 'positive' else 'deny'
+            else:
+                set_decision = 'deny' if pol['tp'] == 'positive' else 'permit'
+        else:
+            set_decision = 'deny'
 
         decisions[f"set_{i}"] = set_decision
 
-    return decisions
+        return decisions
 
 
 def combinePs(decisions, co):
@@ -84,15 +63,12 @@ def combinePs(decisions, co):
             return 'permit'
         elif 'deny' in decisions:
             return 'deny'
-        else:
-            return 'notApplicable'
+
     elif co == 'all':
         if 'deny' in decisions:
             return 'deny'
         elif all(decision == 'permit' for decision in decisions):
             return 'permit'
-        else:
-            return 'notApplicable'
 
 
 def conflictRes(Ps, crs, arc):

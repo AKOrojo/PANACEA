@@ -15,7 +15,7 @@ mapped_document = m(document)
 mapped_documents.extend(mapped_document)
 
 security_metadata_variations = [
-    [{"aip": ["research"]}],
+    [{"aip": ["research"]}, {"aip": ["marketing"]}],
     [{"aip": ["administration"]}],
     [{"aip": ["marketing"]}],
     [{"aip": ["finance"]}],
@@ -24,15 +24,9 @@ security_metadata_variations = [
 
 policy_variations = [
     # Group 1 policies: Positive access for research
-    [{"exp": "s.ap in meta.aip", "tp": "positive"}],
+    [{"exp": "s.ap in meta.aip", "tp": "positive"}, {"exp": "s.ap in meta.aip", "tp": "negative"}],
     # Group 2 policies: Negative access for administration
     [{"exp": "s.ap not in meta.aip", "tp": "negative"}],
-    # Group 3 policies: Mixed, positive for marketing but with conditions
-    [{"exp": "s.role == 'Manager' and s.ap in meta.aip", "tp": "positive"}],
-    # Group 4 policies: Positive access during specific times
-    [{"exp": "s.ap in meta.aip and s.time == 'BusinessHours'", "tp": "positive"}],
-    # Group 5 policies: Negative for non-engineering roles
-    [{"exp": "s.role != 'Engineer' and s.ap not in meta.aip", "tp": "negative"}],
 ]
 
 split_count = 5
@@ -45,55 +39,13 @@ finalized_data_units = {key: f(du) for key, du in reduced_data_units.items()}
 
 arc_variations = [
     {
-        'subject': {'ap': 'research'},
-        'policies': [
-            {"exp": "s.ap in meta.aip", "tp": "positive"},
-            {"exp": "s.ap not in meta.aip", "tp": "negative"}
-        ]
+        'subject': {'aip': 'research'},
     }
 ]
 
-# arc_variations = [
-#     {
-#         'subject': {'ap': 'research'},
-#         'policies': [
-#             {"exp": "s.ap in meta.aip", "tp": "positive"},
-#             {"exp": "s.ap not in meta.aip", "tp": "negative"}
-#         ]
-#     },
-#     {
-#         'subject': {'ap': 'administration'},
-#         'policies': [
-#             {"exp": "s.ap in meta.aip", "tp": "positive"},
-#             {"exp": "s.ap not in meta.aip", "tp": "negative"}
-#         ]
-#     },
-#     {
-#         'subject': {'ap': 'marketing', 'role': 'Manager'},
-#         'policies': [
-#             {"exp": "s.role == 'Manager' and s.ap in meta.aip", "tp": "positive"},
-#             {"exp": "s.ap not in meta.aip", "tp": "negative"}
-#         ]
-#     },
-#     {
-#         'subject': {'ap': 'finance', 'time': 'BusinessHours'},
-#         'policies': [
-#             {"exp": "s.ap in meta.aip and s.time == 'BusinessHours'", "tp": "positive"},
-#             {"exp": "s.ap not in meta.aip", "tp": "negative"}
-#         ]
-#     },
-#     {
-#         'subject': {'ap': 'engineering', 'role': 'Analyst'},
-#         'policies': [
-#             {"exp": "s.ap in meta.aip", "tp": "positive"},
-#             {"exp": "s.role != 'Engineer' and s.ap not in meta.aip", "tp": "negative"}
-#         ]
-#     }
-# ]
 
 # Assuming combining option is defined
-
-combining_option = 'any'  # or 'all' based on your requirement
+combining_option = 'any'
 
 for arc in arc_variations:
     for key, urp_group in grouped_urps.items():
