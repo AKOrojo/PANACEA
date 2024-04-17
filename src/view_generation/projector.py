@@ -1,6 +1,7 @@
-import re
-from src.view_generation.remodeler import remodelerMap
+from src.view_generation.remodeler import updateDu
 
+dcgl = {}
+cgl = {}
 
 def evaluate(urp, arc):
     """
@@ -17,11 +18,11 @@ def evaluate(urp, arc):
     decisions = {}
 
     if 'meta' not in urp or 'pol' not in urp:
-        decisions['default'] = 'permit'
+        decisions['default'] = {'decision': 'permit', 'tp': 'positive'}
         return decisions
 
     if 'subject' not in arc or 'aip' not in arc['subject']:
-        decisions['default'] = 'deny'
+        decisions['default'] = {'decision': 'deny', 'tp': 'negative'}
         return decisions
 
     # Iterate over each metadata and policy set in the URP
@@ -31,20 +32,20 @@ def evaluate(urp, arc):
 
         if pol['exp'] == "s.ap in meta.aip":
             if arc['subject']['aip'] in meta['aip']:
-                set_decision = 'permit' if pol['tp'] == 'positive' else 'deny'
+                set_decision = {'decision': 'permit', 'tp': pol['tp']}
             else:
-                set_decision = 'deny' if pol['tp'] == 'positive' else 'permit'
+                set_decision = {'decision': 'deny', 'tp': pol['tp']}
         elif pol['exp'] == "s.ap not in meta.aip":
             if arc['subject']['aip'] not in meta['aip']:
-                set_decision = 'permit' if pol['tp'] == 'positive' else 'deny'
+                set_decision = {'decision': 'permit', 'tp': pol['tp']}
             else:
-                set_decision = 'deny' if pol['tp'] == 'positive' else 'permit'
+                set_decision = {'decision': 'deny', 'tp': pol['tp']}
         else:
-            set_decision = 'deny'
+            set_decision = {'decision': 'deny', 'tp': 'negative'}
 
         decisions[f"set_{i}"] = set_decision
 
-        return decisions
+    return decisions
 
 
 def combinePs(decisions, co):
@@ -52,184 +53,189 @@ def combinePs(decisions, co):
     Combines the decisions from multiple policies based on the specified combining option.
 
     Parameters:
-    - decisions (list): A list of access decisions ('permit', 'deny', or 'notApplicable').
+    - decisions (dict): A dictionary of access decisions, where the key is the set identifier
+                        and the value is a dictionary containing the decision ('permit' or 'deny')
+                        and the policy type ('positive' or 'negative').
     - co (str): The combining option ('any' or 'all').
 
     Returns:
-    - str: The combined access decision ('permit', 'deny', or 'notApplicable').
+    - dict: A dictionary containing the combined access decision for positive and negative policy types.
     """
+    combined_decision = {}
+
     if co == 'any':
-        if 'permit' in decisions:
-            return 'permit'
-        elif 'deny' in decisions:
-            return 'deny'
-
+        for decision in decisions.values():
+            if decision['tp'] not in combined_decision:
+                combined_decision[decision['tp']] = decision['decision']
+            elif decision['decision'] == 'permit':
+                combined_decision[decision['tp']] = 'permit'
     elif co == 'all':
-        if 'deny' in decisions:
-            return 'deny'
-        elif all(decision == 'permit' for decision in decisions):
-            return 'permit'
+        for decision in decisions.values():
+            if decision['tp'] not in combined_decision:
+                combined_decision[decision['tp']] = decision['decision']
+            elif decision['decision'] == 'deny':
+                combined_decision[decision['tp']] = 'deny'
+
+    return combined_decision
 
 
-def conflictRes(Ps, crs, arc):
+def conflictRes(combined_decision, crs):
     """
-    Resolves conflicts between positive and negative policies Ps based on the conflict resolution strategy crs.
+    Resolves conflicts between positive and negative policy decisions based on the specified
+    conflict resolution strategy.
 
     Parameters:
-    - Ps (list of dict): A list of policy objects, containing both positive and negative policy predicates.
-        - Each policy object should have the following structure:
-            {
-                'exp': 'expression to evaluate',
-                'tp': 'positive' or 'negative'
-            }
-    - crs (str): The conflict resolution strategy, either 'denials take precedence' or 'permissions take precedence'.
-    - arc (dict): The access request context.
+    - combined_decision (dict): A dictionary containing the combined access decision for positive
+                                and negative policy types.
+    - crs (str): The conflict resolution strategy ('denials take precedence' or 'permissions take precedence').
 
     Returns:
-    - bool: The final decision after resolving conflicts between positive and negative policies.
+    - str: The final access decision after resolving conflicts.
     """
-    positive_decisions = []
-    negative_decisions = []
+    if crs == 'denials-take-precedence':
+        if 'negative' in combined_decision:
+            if combined_decision['negative'] == 'deny':
+                return 'deny'
+            elif 'positive' in combined_decision:
+                return combined_decision['positive']
+        elif 'positive' in combined_decision:
+            return combined_decision['positive']
+    elif crs == 'permissions-take-precedence':
+        if 'positive' in combined_decision:
+            if combined_decision['positive'] == 'permit':
+                return 'permit'
+            elif 'negative' in combined_decision:
+                return combined_decision['negative']
+        elif 'negative' in combined_decision:
+            return combined_decision['negative']
 
-    # Evaluate each policy predicate and categorize the decisions
-    for p in Ps:
-        decision = evaluate(p, arc)
-        if p['tp'] == 'positive':
-            positive_decisions.append(decision)
-        else:
-            negative_decisions.append(decision)
-
-    # Resolve conflicts based on the conflict resolution strategy
-    if crs == 'denials take precedence':
-        # If any negative decision is True, return False
-        return not any(negative_decisions)
-    elif crs == 'permissions take precedence':
-        # If any positive decision is True, return True
-        return any(positive_decisions)
-    else:
-        # Return False if the conflict resolution strategy is not supported
-        return False
+    return None
 
 
-def propagateDCG(du, cgl1, ppc):
+def projector_m(urps, arc, co, crs):
     """
-   Propagates decisions related to coarse-grained resources at level 1 (DCG L1) to the data unit du.
+    Groups Unifying Resource Properties (URPs) by their data unit identifier.
 
-   Parameters:
-   - du (dict): The data unit object.
-   - cgl1 (dict): The decisions related to coarse-grained resources at level 1.
-   - ppc (str): The policy propagation criterion, one of 'no propagation', 'no overriding', or 'most specific overrides'.
-
-   Returns:
-   - dict: The updated data unit du with propagated decisions.
-   """
-    # Implement the logic to propagate the DCG L1 decisions to the data unit du
-    # based on the policy propagation criterion
-    # Update the 'pol' and 'meta' fields of du accordingly
-    # Return the updated data unit
-    pass
-
-
-def propagateFCG(du, cgl2, ppc):
-    """
-   Propagates decisions related to coarse-grained resources at level 2 (FCG L2) to the data unit du.
-
-   Parameters:
-   - du (dict): The data unit object.
-   - cgl2 (dict): The decisions related to coarse-grained resources at level 2.
-   - ppc (str): The policy propagation criterion, one of 'no propagation', 'no overriding', or 'most specific overrides'.
-
-   Returns:
-   - dict: The updated data unit du with propagated decisions.
-   """
-    # Implement the logic to propagate the DCG L2 decisions to the data unit du
-    # based on the policy propagation criterion
-    # Update the 'pol' and 'meta' fields of du accordingly
-    # Return the updated data unit
-    pass
-
-
-def updateDu(du, arc):
-    """
-   Updates the data unit du based on the access request context arc.
-
-   Parameters:
-   - du (dict): The data unit object.
-   - arc (dict): The access request context, containing parameters like subject and environment.
-
-   Returns:
-   - dict: The updated data unit du with authorized and unauthorized data marked.
-   """
-    # Implement the logic to update the data unit du based on the access request context arc
-    # Identify the authorized and unauthorized data within du and mark them accordingly
-    # Return the updated data unit
-    pass
-
-
-def projector(urps, co, crs, arc):
-    """
-    Applies the MapReduce task projector to the given URPs.
+    This function simulates the initial mapping phase of the MapReduce task remodeler,
+    organizing URPs based on the data units they belong to. It's the first step in the
+    reverse mapping process, preparing URPs for aggregation into structured data units.
 
     Parameters:
-    - urps (list of dict): A list of Unifying Resource Properties.
-    - co (str): The combining option, either 'any' or 'all'.
-    - crs (str): The conflict resolution strategy, either 'denials take precedence' or 'permissions take precedence'.
-    - arc (dict): The access request context.
+    - urps (list of dict): A list of Unifying Resource Properties, each represented as a dictionary.
 
     Returns:
-    - dict: A dictionary containing the results of the MapReduce task projector.
+    - dict: A dictionary where each key is a data unit identifier and each value is a list
+            of URPs belonging to that data unit.
     """
-    # Apply the map function m to the URPs
-    grouped_urps = remodelerMap(urps)
 
-    # Apply to evaluate, combinePs, and conflictRes functions to the grouped URPs
-    results = {}
-    # for key, urps_list in grouped_urps.items():
-    #     results[key] = {'combined_decision': combined_decision, 'resolved_decision': resolved_decision, 'evaluation_decision': evaluation_decision}
+    grouped_urps = {}  # Initialize an empty dictionary to hold grouped URPs.
+    for urp_tuple in urps:
+        urp_id, urp_value = urp_tuple  # Extract ID and value from each tuple in the list.
+        key = urp_value['path'][0]  # Use the first element of the 'path' as the grouping key.
+        if key not in grouped_urps:
+            grouped_urps[key] = []  # Initialize a new list if key is not already present.
+        grouped_urps[key].append(urp_value)  # Append the URPs to the appropriate list.
 
-    return results
+    for key, urp_group in grouped_urps.items():
+        for urp in urp_group:
+            if 'V' not in urp:  # Check if URP represents a coarse-grained resource
+                access_decision = evaluate(urp, arc)
+                urp['access_decision'] = access_decision
+                combined_decision = combinePs(access_decision, co)
+                urp['combined_decision'] = combined_decision
+                conflict_resolution = conflictRes(combined_decision, crs)
+                urp['conflict_resolution'] = conflict_resolution
 
-
-def handleSP(fdr1, tdr2, ppc, crs, st):
-    """Handle specific policy propagation cases."""
-    if ppc == "most-specific-overrides":
-        return tdr2 if tdr2 else fdr1
-    elif ppc == "no-overriding":
-        if tdr2:
-            if crs == "denials-take-precedence":
-                return "deny" if "deny" in [fdr1, tdr2] else "permit"
+                # Keep track of derived decisions for coarse-grained resources
+                level = len(urp['path'])
+                global dcgl, cgl
+                if level not in dcgl:
+                    dcgl[level] = {}
+                    cgl[level] = {}
+                if key not in dcgl[level]:
+                    dcgl[level][key] = {}
+                    cgl[level][key] = {}
+                dcgl[level][key][urp['id']] = conflict_resolution
+                cgl[level][key][urp['id']] = urp['K']
             else:
-                return "permit" if "permit" in [fdr1, tdr2] else "deny"
-        else:
-            return fdr1
-    elif ppc == "no-propagation":
-        return tdr2 if tdr2 else ("permit" if st == "open" else "deny")
+                access_decision = evaluate(urp, arc)
+                urp['access_decision'] = access_decision
+                combined_decision = combinePs(access_decision, co)
+                urp['combined_decision'] = combined_decision
+                conflict_resolution = conflictRes(combined_decision, crs)
+                urp['conflict_resolution'] = conflict_resolution
+
+    return grouped_urps
 
 
-def propagateDCG(cgl1, cgl2, dcgl1, dcgl2, crs, ppc, st):
-    """Propagate decisions from coarse-grained resources."""
-    dec = "permit" if dcgl1 == "permit" or st == "open" else "deny"
-    unauthCGR = []
-    if dec == "deny":
-        unauthCGR.append(cgl1)
-        if cgl2:
-            dec = handleSP(dec, dcgl2, ppc, crs, st)
-            if dec == "deny":
-                unauthCGR.append(cgl2)
-    return dec, unauthCGR
+def projector_r(urpS, key):
+    """
+    Reduces a set of URPs by a specific key to structure the data unit.
+
+    This function iterates over a set of URPs, organizing and aggregating them into a structured
+    data unit based on a specified key. It differentiates between URPs that match the key directly
+    and those that do not, handling them accordingly to construct the final data unit.
+
+    Parameters:
+    - urpS (list of dict): The set of URPs modeling components of the same data unit.
+    - key (str): The identifier key of the referred data unit.
+
+    Returns:
+    - dict: The aggregated data unit as a dictionary.
+    """
+    du = {}  # Initialize the data unit as an empty dictionary.
+    tbs = []  # To be structured: List of URPs needing further processing.
+    tbp = []  # To be pruned: List of URPs that will be removed after structuring.
+
+    # Iterate over each URP in the set.
+    for urp in urpS:
+        if urp['path'][-1] == key:  # Check if the URP refers directly to the specified key.
+            if 'V' in urp:  # If 'V' is present, use it as the value.
+                du[urp['K']] = urp['V']
+            else:  # Otherwise, use the 'id' as the value and note it for structuring.
+                du[urp['K']] = urp['id']
+                tbs.append(urp['id'])
+        else:  # For URPs not referring directly to the key.
+            if urp['path'][-1] not in du:  # Initialize a nested dictionary if needed.
+                du[urp['path'][-1]] = {}
+                tbp.append(urp['path'][-1])
+            if 'V' in urp:  # Assign 'V' or 'id' to the nested dictionary accordingly.
+                du[urp['path'][-1]][urp['K']] = urp['V']
+            else:
+                du[urp['path'][-1]][urp['K']] = urp['id']
+                tbs.append(urp['id'])
+
+    du['tbs'] = tbs  # Add the list of URPs to be structured to the data unit.
+    du['tbp'] = tbp  # Add the list of URPs to be pruned to the data unit.
+    return du
 
 
-def apply_policies_to_du(du, ppc, crs, st):
-    """Apply policies to a single data unit and its components."""
-    fdr1 = "permit"
-    tdr2 = du.get("policy_decision", None)
+def projector_f(du):
+    """
+    Finalizes the data unit by removing specified fields and updating values.
 
-    final_decision = handleSP(fdr1, tdr2, ppc, crs, st)
+    This function processes the data unit resulting from the `r` function, removing
+    unnecessary fields and updating the data unit based on the lists of URPs to be
+    structured and pruned.
 
-    du["access_decision"] = final_decision
+    Parameters:
+    - du (dict): The data unit derived from the execution trace of `r`.
 
-    for key, value in du.items():
-        if isinstance(value, dict):
-            apply_policies_to_du(value, ppc, crs, st)
+    Returns:
+    - dict: The modified version of the data unit.
+    """
+    # Process each URP marked for structuring.
+    for oid in du['tbs']:
+        if oid in du:  # Check if the URP exists within the data unit.
+            updateDu(du, oid, du[oid])  # Update the data unit accordingly.
+            del du[oid]  # Remove the URP after updating.
 
+    # Process each URP marked for pruning.
+    for oid in du['tbp']:
+        if oid in du:  # Check if the URP exists within the data unit.
+            del du[oid]  # Remove the URP.
+
+    # Clean up by removing the lists of URPs to be structured and pruned.
+    del du['tbs']
+    del du['tbp']
     return du
