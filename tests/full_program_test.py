@@ -13,7 +13,6 @@ document = {
 mapped_documents = []
 mapped_document = m(document)
 mapped_documents.extend(mapped_document)
-print(mapped_documents)
 
 security_metadata_variations = [
     [{"aip": ["research"]}, {"aip": ["marketing"]}],
@@ -47,24 +46,15 @@ arc_variations = [
 # Assuming combining option is defined
 co = 'all'
 crs = "denials-take-precedence"
+ppc = "most-specific-overrides"
+st = "open"
 
 for arc in arc_variations:
     sec_map_dus = projector_m(security_urps, arc, co, crs)
-    for key, sec_map in sec_map_dus.items():
-        for urp in sec_map:
-            print(urp)
-
     sec_reduces_data_units = {key: projector_r(urps, key) for key, urps in sec_map_dus.items()}
-    sec_finalized_data_units = {key: projector_f(du) for key, du in sec_reduces_data_units.items()}
-    #
+    print(sec_reduces_data_units)
+    sec_finalized_data_units = {key: projector_f(du, arc, co, crs, ppc, st) for key, du in sec_reduces_data_units.items()}
     print(sec_finalized_data_units)
-#
-# # Simulation
-# ppc = "most-specific-overrides"
-#
-# st = "open"
-# co = "all"
-# arc = {"s": {"ap": ["research"], "role": "Manager"}, "e": {"time": "BusinessHours"}}
 
 reduce_derived_proj = [
     ("3e29",
