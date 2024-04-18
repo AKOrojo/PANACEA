@@ -13,6 +13,7 @@ document = {
 mapped_documents = []
 mapped_document = m(document)
 mapped_documents.extend(mapped_document)
+print(mapped_documents)
 
 security_metadata_variations = [
     [{"aip": ["research"]}, {"aip": ["marketing"]}],
@@ -53,10 +54,9 @@ for arc in arc_variations:
         for urp in sec_map:
             print(urp)
 
-
     sec_reduces_data_units = {key: projector_r(urps, key) for key, urps in sec_map_dus.items()}
     sec_finalized_data_units = {key: projector_f(du) for key, du in sec_reduces_data_units.items()}
-#
+    #
     print(sec_finalized_data_units)
 #
 # # Simulation
@@ -66,3 +66,20 @@ for arc in arc_variations:
 # co = "all"
 # arc = {"s": {"ap": ["research"], "role": "Manager"}, "e": {"time": "BusinessHours"}}
 
+reduce_derived_proj = [
+    ("3e29",
+     {"tbs": ["53da"],
+      "tbp": [],
+      "meta": [{"id": "body",
+                "path": ["3e29"],
+                "psSet": [{"aip": ["research, administration"],
+                           "pip": ["marketing"]}]}],
+      "pol": [{"id": "body",
+               "path": ["3e29"],
+               "psa": ["s.ap in meta.aip"],
+               "psp": ["s.ap in meta pip"]}],
+      "body": "I'm ready, are you?",
+      "headers": "53da",
+      "53da": {
+          "From": "daphneco64@bigplanet.com",
+      }})]
