@@ -1,7 +1,6 @@
 from src.policy.specification import split_and_bind_policies_to_urp
 from src.unifying_model.mapper import m
-from src.view_generation.projector import evaluate, combinePs, conflictRes, projector_r, projector_f, projector_m
-from src.view_generation.remodeler import r, f, remodelerMap
+from src.view_generation.projector import projector_r, projector_f, projector_m
 
 document = {
     "_id": "doc1",
@@ -33,9 +32,6 @@ split_count = 5
 security_urps = split_and_bind_policies_to_urp(mapped_documents, "body", security_metadata_variations,
                                                policy_variations, split_count)
 
-# grouped_urps = remodelerMap(security_urps)
-# reduced_data_units = {key: r(urps, key) for key, urps in grouped_urps.items()}
-# finalized_data_units = {key: f(du) for key, du in reduced_data_units.items()}
 
 arc_variations = [
     {
@@ -53,7 +49,8 @@ for arc in arc_variations:
     sec_map_dus = projector_m(security_urps, arc, co, crs)
     sec_reduces_data_units = {key: projector_r(urps, key) for key, urps in sec_map_dus.items()}
     print(sec_reduces_data_units)
-    sec_finalized_data_units = {key: projector_f(du, arc, co, crs, ppc, st) for key, du in sec_reduces_data_units.items()}
+    sec_finalized_data_units = {key: projector_f(du, arc, co, crs, ppc, st) for key, du in
+                                sec_reduces_data_units.items()}
     print(sec_finalized_data_units)
 
 reduce_derived_proj = [
@@ -73,3 +70,18 @@ reduce_derived_proj = [
       "53da": {
           "From": "daphneco64@bigplanet.com",
       }})]
+
+x = {'doc1':
+     {'_id': 'doc1',
+      'key': 'value',
+      'f93ac727-941b-4ef5-8897-3166f9215832': {'body': 'value'},
+      'nested': 'f93ac727-941b-4ef5-8897-3166f9215832',
+      'tbs': ['f93ac727-941b-4ef5-8897-3166f9215832'],
+      'tbp': ['f93ac727-941b-4ef5-8897-3166f9215832'],
+      'meta': [{'id': '67adb03f-562a-45b5-8946-75690a5db8f6',
+                'path': ['doc1', 'f93ac727-941b-4ef5-8897-3166f9215832'],
+                'psSet': [{'aip': ['research']}, {'aip': ['marketing']}]}],
+      'pol': [{'id': '67adb03f-562a-45b5-8946-75690a5db8f6',
+               'path': ['doc1', 'f93ac727-941b-4ef5-8897-3166f9215832'],
+               'psa': ['s.ap in meta.aip'],
+               'psp': ['s.ap in meta.aip']}]}}

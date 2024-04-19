@@ -285,16 +285,14 @@ def propagateDCG(du, cgl_values, dcgl_values, crs, ppc, st):
     - str: The access decision to be propagated to the data unit.
     """
     dec = None
-    if dcgl1 == 'permit' or dcgl1 == 'deny':
-        dec = dcgl1
-    else:
-        dec = 'permit' if st == 'open' else 'deny'
-    if dec == 'deny':
-        du.setdefault('unauthCGR', []).append(cgl1)
-    if cgl2 is not None:
-        dec = handleSP(dec, dcgl2, ppc, crs, st)
+    for cgl_value, dcgl_value in zip(cgl_values, dcgl_values):
+        if dcgl_value == 'permit' or dcgl_value == 'deny':
+            dec = dcgl_value
+        elif dec is None:
+            dec = 'permit' if st == 'open' else 'deny'
         if dec == 'deny':
-            du.setdefault('unauthCGR', []).append(cgl2)
+            du.setdefault('unauthCGR', []).append(cgl_value)
+        dec = handleSP(dec, dcgl_value, ppc, crs, st)
     return dec
 
 
@@ -399,11 +397,14 @@ def projector_f(du, arc, co, crs, ppc, st):
     cgl_values = []
     dcgl_values = []
 
-    for level in range(1, len(du['path']) + 1):
-        key = du['path'][level - 1]
+    # Extract the 'path' information from 'meta' or 'pol' lists
+    path = du.get('meta', [{}])[0].get('path', []) or du.get('pol', [{}])[0].get('path', [])
+
+    for level in range(1, len(path) + 1):
+        key = path[level - 1]
         if level in cgl and key in cgl[level]:
-            cgl_value = cgl[level][key].get(du['id'])
-            dcgl_value = dcgl[level][key].get(du['id'])
+            cgl_value = cgl[level][key].get(du['_id'])
+            dcgl_value = dcgl[level][key].get(du['_id'])
             cgl_values.append(cgl_value)
             dcgl_values.append(dcgl_value)
         else:
