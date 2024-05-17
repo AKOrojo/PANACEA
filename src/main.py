@@ -1,7 +1,8 @@
-from access_control_view.mongo_connection import get_mongo_client, get_database, get_collection, \
-    get_data_from_collection
-from access_control_view.mapper import map_function, reduce_function
+import time
+
+from access_control_view.mongo_connection import get_mongo_client, get_database, get_collection
 from src.utils.log_config import get_logger
+from src.access_control_view.mapper import mapper_pipeline
 
 logger = get_logger(__name__)
 
@@ -13,9 +14,24 @@ def main():
 
     database = get_database(client, 'enron')
     collection = get_collection(database, 'messages')
-    mapped_documents = collection.map_reduce(map_function, reduce_function, "myoutput")
-    for doc in mapped_documents.find():
+
+    start_time = time.time()
+
+    mapped_documents = collection.aggregate(mapper_pipeline)
+
+    count = 0
+    for doc in mapped_documents:
         print(doc)
+        count += 1
+
+    elapsed_time = (time.time() - start_time) * 1000
+
+    print(f"Number of URPS: {count}")
+    print(f"Elapsed time: {elapsed_time:.2f} ms")
+
+
+if __name__ == "__main__":
+    main()
 
     # clear_or_create_file('unifying_model/urpS.log')
     #
@@ -73,7 +89,3 @@ def main():
     #
     # finalized_du_with_policies = apply_policies_to_du(finalized_data_units, ppc, crs, st)
     # detect_and_print_conflicts(finalized_du_with_policies)
-
-
-if __name__ == '__main__':
-    main()
