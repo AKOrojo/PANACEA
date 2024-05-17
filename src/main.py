@@ -1,6 +1,7 @@
 import time
 
 from access_control_view.mongo_connection import get_mongo_client, get_database, get_collection
+from src.access_control_view.policy import policy_assignment_pipeline
 from src.utils.log_config import get_logger
 from src.access_control_view.mapper import mapper_pipeline
 
@@ -16,18 +17,24 @@ def main():
     collection = get_collection(database, 'messages')
 
     start_time = time.time()
-
-    mapped_documents = collection.aggregate(mapper_pipeline)
-
-    count = 0
-    for doc in mapped_documents:
-        print(doc)
-        count += 1
-
+    urp_documents = list(collection.aggregate(mapper_pipeline))
     elapsed_time = (time.time() - start_time) * 1000
+    print(f"Elapsed time URP Creation: {elapsed_time:.2f} ms")
 
-    print(f"Number of URPS: {count}")
-    print(f"Elapsed time: {elapsed_time:.2f} ms")
+    # Policy Assignment
+    urp_collection = database["urps"]
+    urp_collection.insert_many(urp_documents)
+
+    start_time_policy = time.time()
+    urps_with_policies = list(urp_collection.aggregate(policy_assignment_pipeline))
+    elapsed_time_policy = (time.time() - start_time_policy) * 1000
+    print(f"Number of URPS: {len(urps_with_policies)}")
+    print(f"Elapsed time Policy Assignment: {elapsed_time_policy:.2f} ms")
+
+    for urp in urps_with_policies:
+        print(urp)
+
+    urp_collection.drop()
 
 
 if __name__ == "__main__":
