@@ -37,9 +37,13 @@ def main():
     #
     # urp_collection.drop()
 
+    # Sample a subset of the messages collection
+    sample_size = 100  # Adjust the sample size as needed
+    sample_stage = [{"$sample": {"size": sample_size}}]
+
     # Combined URP Creation and Policy Assignment
     start_time = time.time()
-    urp_documents = list(collection.aggregate(combined_pipeline))
+    urp_documents = list(collection.aggregate(sample_stage + combined_pipeline))
     elapsed_time = (time.time() - start_time) * 1000
     print(f"Number of URPS: {len(urp_documents)}")
     print(f"Elapsed time: {elapsed_time:.2f} ms")
