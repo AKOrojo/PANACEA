@@ -21,20 +21,22 @@ combined_pipeline = [
                             usedPurposes.add(purpose);
                             if (is_positive) {
                                 meta.aip.push(purpose);
-                                var policy = {
-                                    exp: "s.ap in meta.aip && s.ap == '" + purpose + "'",
-                                    tp: "positive"
-                                };
-                                policies.push(policy);
                             } else {
                                 meta.pip.push(purpose);
-                                var policy = {
-                                    exp: "s.ap in meta.pip && s.ap == '" + purpose + "'",
-                                    tp: "negative"
-                                };
-                                policies.push(policy);
                             }
                         }
+                    }
+                    if (meta.aip.length > 0) {
+                        policies.push({
+                            exp: "s.ap in meta.aip",
+                            tp: "positive"
+                        });
+                    }
+                    if (meta.pip.length > 0) {
+                        policies.push({
+                            exp: "s.ap in meta.pip",
+                            tp: "negative"
+                        });
                     }
                     return {policies: policies, meta: meta};
                 }
