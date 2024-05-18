@@ -48,8 +48,8 @@ def main():
     print(f"Number of URPS: {len(urp_documents)}")
     print(f"Elapsed time: {elapsed_time:.2f} ms")
 
-    for urp in urp_documents:
-        print(urp)
+    # for urp in urp_documents:
+    #     print(urp)
 
 
 if __name__ == "__main__":
