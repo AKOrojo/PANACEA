@@ -1,6 +1,6 @@
 import unittest
 
-from src.policy.specification import split_and_bind_policies_to_urp
+from src.access_control_view.specification import split_and_bind_policies_to_urp
 
 
 class TestSplitAndBindPoliciesToURP(unittest.TestCase):

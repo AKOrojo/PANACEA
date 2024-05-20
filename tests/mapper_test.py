@@ -1,6 +1,5 @@
 import unittest
-from src.unifying_model.mapper import duMapper, m
-from src.utils.util_functions import print_urp
+from src.access_control_view.mapper import duMapper, m
 
 
 class TestMapper(unittest.TestCase):

@@ -3,6 +3,11 @@ from src.utils.log_config import get_logger
 logger = get_logger(__name__)
 
 
+def setField(obj, field, value):
+    """Sets a field in an object to the given value."""
+    obj[field] = value
+
+
 def write_finalized_data_units_to_file(finalized_data_unit, file_path):
     """
     Writes each finalized data unit to its own line in a file, handling special types like ObjectId.

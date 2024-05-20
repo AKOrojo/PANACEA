@@ -1,12 +1,10 @@
+from src.access_control_view.util_functions import setField
+import uuid
+
+
 def generateId():
     """Generates a unique identifier for each URP. For simplicity, use UUID."""
-    import uuid
     return str(uuid.uuid4())
-
-
-def setField(obj, field, value):
-    """Sets a field in an object to the given value."""
-    obj[field] = value
 
 
 def push(list_obj, element):
@@ -46,6 +44,3 @@ def m(du):
     for urp in urpS:
         emitted_pairs.append((urp['id'], urp))
     return emitted_pairs
-
-
-

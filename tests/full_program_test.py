@@ -1,5 +1,5 @@
-from src.policy.specification import split_and_bind_policies_to_urp
-from src.unifying_model.mapper import m
+from src.access_control_view.specification import split_and_bind_policies_to_urp
+from src.access_control_view.mapper import m
 from src.view_generation.projector import projector_r, projector_f, projector_m
 
 document = {

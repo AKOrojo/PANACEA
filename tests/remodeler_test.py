@@ -1,6 +1,5 @@
 import unittest
 
-from src.unifying_model.mapper import m
 from src.view_generation.remodeler import remodelerMap, r, f
 
 
