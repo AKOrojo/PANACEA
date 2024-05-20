@@ -26,16 +26,18 @@ def main():
         mapped_document = m(document)
         mapped_documents.extend(mapped_document)
 
-    clear_or_create_file('unifying_model/urpS.log')
+    clear_or_create_file('logs/urpS.log')
 
     # Apply random policies and metadata to each URP
-    for urp in mapped_documents:
-        random_policy(urp[1])
-        write_urp_to_file(urp, 'unifying_model/urpS.log')
+    for urp_id, urp in mapped_documents:
+        write_urp_to_file(urp, 'logs/urpS.log')
 
-    clear_or_create_file('policy/security_urp.log')
-    for urp in mapped_documents:
-        write_security_urp_to_file(urp, 'policy/security_urp.log')
+    clear_or_create_file('logs/security_urp.log')
+
+    # Apply random policies and metadata to each URP
+    for urp_id, urp in mapped_documents:
+        random_policy(urp)
+        write_security_urp_to_file(urp, 'logs/security_urp.log')
 
     # grouped_urps = remodelerMap(mapped_documents)
     # reduced_data_units = {key: reduce_by_key(urps, key) for key, urps in grouped_urps.items()}

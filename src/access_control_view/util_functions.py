@@ -103,15 +103,15 @@ def write_security_urp_to_file(urp, file_path):
     """
     with open(file_path, 'a') as file:  # Open the file in append mode
         value_str = "{\n"
-        value_str += f"  'path': {urp['value'].get('path', [])},\n"
-        value_str += f"  'id': '{urp['value'].get('id', 'Unknown')}',\n"
-        value_str += f"  'K': '{urp['value'].get('K', 'Unknown')}',\n"
-        if 'V' in urp['value']:
-            value_str += f"  'V': '{urp['value'].get('V', 'Unknown')}',\n"
-        if 'meta' in urp['value']:
-            value_str += f"  'meta': {urp['value'].get('meta', {})},\n"
-        if 'pol' in urp['value']:
-            value_str += f"  'pol': {urp['value'].get('pol', [])}\n"
+        value_str += f"  'path': {urp.get('path', [])},\n"
+        value_str += f"  'id': '{urp.get('id', 'Unknown')}',\n"
+        value_str += f"  'K': '{urp.get('K', 'Unknown')}',\n"
+        if 'V' in urp:
+            value_str += f"  'V': '{urp.get('V', 'Unknown')}',\n"
+        if 'meta' in urp:
+            value_str += f"  'meta': {urp.get('meta', {})},\n"
+        if 'pol' in urp:
+            value_str += f"  'pol': {urp.get('pol', [])}\n"
         value_str += "}"
         file.write(f"{{'_id': '{urp.get('_id', 'Unknown')}',\n'value': {value_str}}}\n\n")
 
