@@ -360,7 +360,7 @@ def generateView(du):
             if 'id' in node and 'path' in node:
                 node_path = node['path']
                 if any(item['path'] == node_path for item in du.get('unauthS', [])):
-                    return f"[UNAUTHORIZED ({node.get('id', '')})]"
+                    return f"[UNAUTHORIZED (id: {node.get('id', '')}, path: {node.get('path', '')})]"
 
             return {key: mark_unauthorized(value, path + [key]) for key, value in node.items()}
         elif isinstance(node, list):
