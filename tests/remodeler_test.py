@@ -1,6 +1,6 @@
 import unittest
 
-from src.view_generation.remodeler import remodelerMap, r, f
+from src.access_control_view.remodeler import remodelerMap, r, f
 
 
 class TestEmailProcessing(unittest.TestCase):

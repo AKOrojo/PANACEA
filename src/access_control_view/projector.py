@@ -1,4 +1,4 @@
-from src.view_generation.remodeler import updateDu
+from src.access_control_view.remodeler import updateDu
 
 dcgl = {}
 cgl = {}
@@ -18,29 +18,29 @@ def evaluate(urp, arc):
     """
     decisions = {}
 
-    if 'meta' not in urp or 'pol' not in urp:
+    if 'meta' not in urp or not urp['meta'] or 'pol' not in urp or not urp['pol']:
         decisions['default'] = {'decision': 'permit', 'tp': 'positive'}
         return decisions
 
-    if 'subject' not in arc or 'aip' not in arc['subject']:
+    if 'subject' not in arc or 'attributes' not in arc['subject'] or 'department' not in arc['subject']['attributes']:
         decisions['default'] = {'decision': 'deny', 'tp': 'negative'}
         return decisions
 
-    # Iterate over each metadata and policy set in the URP
-    for i in range(len(urp['meta'])):
-        meta = urp['meta'][i]
-        pol = urp['pol'][i]
+    subject_department = arc['subject']['attributes']['department']
 
+    # Iterate over each policy set in the URP
+    for i, pol in enumerate(urp['pol']):
+        meta = urp['meta']
         if pol['exp'] == "s.ap in meta.aip":
-            if arc['subject']['aip'] in meta['aip']:
+            if subject_department in meta['aip']:
                 set_decision = {'decision': 'permit', 'tp': pol['tp']}
             else:
                 set_decision = {'decision': 'deny', 'tp': pol['tp']}
-        elif pol['exp'] == "s.ap not in meta.aip":
-            if arc['subject']['aip'] not in meta['aip']:
-                set_decision = {'decision': 'permit', 'tp': pol['tp']}
-            else:
+        elif pol['exp'] == "s.ap in meta.pip":
+            if subject_department in meta['pip']:
                 set_decision = {'decision': 'deny', 'tp': pol['tp']}
+            else:
+                set_decision = {'decision': 'permit', 'tp': pol['tp']}
         else:
             set_decision = {'decision': 'deny', 'tp': 'negative'}
 
@@ -146,6 +146,7 @@ def projector_m(urps, arc, co, crs):
                 urp['combined_decision'] = combined_decision
                 conflict_resolution = conflictRes(combined_decision, crs)
                 urp['conflict_resolution'] = conflict_resolution
+                print(urp)
 
                 # Keep track of derived decisions for coarse-grained resources
                 level = len(urp['path'])
@@ -165,6 +166,7 @@ def projector_m(urps, arc, co, crs):
                 urp['combined_decision'] = combined_decision
                 conflict_resolution = conflictRes(combined_decision, crs)
                 urp['conflict_resolution'] = conflict_resolution
+                print(urp)
 
     return grouped_urps
 
@@ -185,6 +187,7 @@ def projector_r(urpS, key):
     - dict: The aggregated data unit as a dictionary.
     """
     du = {}  # Initialize the data unit as an empty dictionary.
+    du['id'] = key
     tbs = []  # To be structured: List of URPs needing further processing.
     tbp = []  # To be pruned: List of URPs that will be removed after structuring.
     meta = []  # List to store security metadata.
@@ -231,14 +234,45 @@ def projector_r(urpS, key):
     return du
 
 
-def handleSP(fdr1, tdr2, ppc, crs, st):
+def propagateDCG(du, arc, co, crs, ppc, st):
     """
-    Derives the final access decision for a resource based on the temporary decision
-    and the decision of the parent resource.
+    Propagates access decisions from coarse-grained resources to the data unit.
 
     Parameters:
-    - fdr1 (str): The access decision derived for the parent resource.
-    - tdr2 (str): The temporary decision derived for the current resource.
+    - du (dict): The data unit.
+    - arc (dict): The access request context.
+    - co (str): The combining option.
+    - crs (str): The conflict resolution strategy.
+    - ppc (str): The policy propagation criterion.
+    - st (str): The system type.
+
+    Returns:
+    - str: The propagated access decision for the data unit.
+    """
+    global dcgl, cgl
+
+    dec = None
+    for level in sorted(dcgl.keys(), reverse=True):
+        if level in cgl and du['id'] in cgl[level]:
+            cgr_id = list(cgl[level][du['id']].keys())[0]
+            if cgr_id in dcgl[level][du['id']]:
+                cgr_decision = dcgl[level][du['id']][cgr_id]
+                if dec is None:
+                    dec = cgr_decision
+                else:
+                    dec = handleSP(dec, cgr_decision, ppc, crs, st)
+
+    return dec
+
+
+def handleSP(fdr1, tdr2, ppc, crs, st):
+    """
+    Derives the final access decision for a resource based on the propagation criterion,
+    conflict resolution strategy, and system type.
+
+    Parameters:
+    - fdr1 (str): The access decision of the parent resource.
+    - tdr2 (str): The temporary access decision of the current resource.
     - ppc (str): The policy propagation criterion ('most-specific-overrides', 'no-overriding', 'no-propagation').
     - crs (str): The conflict resolution strategy ('denials-take-precedence', 'permissions-take-precedence').
     - st (str): The system type ('open', 'closed').
@@ -247,83 +281,72 @@ def handleSP(fdr1, tdr2, ppc, crs, st):
     - str: The final access decision for the current resource.
     """
     fdr2 = None
+
     if ppc == 'most-specific-overrides':
         if tdr2 is None:
-            return fdr1
+            fdr2 = fdr1
         else:
-            return tdr2
+            fdr2 = tdr2
     elif ppc == 'no-overriding':
         if tdr2 is None:
-            return fdr1
+            fdr2 = fdr1
         else:
             if crs == 'denials-take-precedence':
-                return 'deny' if fdr1 == 'deny' or tdr2 == 'deny' else 'permit'
+                fdr2 = 'deny' if fdr1 == 'deny' or tdr2 == 'deny' else 'permit'
             elif crs == 'permissions-take-precedence':
-                return 'permit' if fdr1 == 'permit' or tdr2 == 'permit' else 'deny'
+                fdr2 = 'permit' if fdr1 == 'permit' or tdr2 == 'permit' else 'deny'
     elif ppc == 'no-propagation':
         if tdr2 is not None:
-            return tdr2
+            fdr2 = tdr2
         else:
-            return 'permit' if st == 'open' else 'deny'
+            if st == 'open':
+                fdr2 = 'permit'
+            elif st == 'closed':
+                fdr2 = 'deny'
+
     return fdr2
 
 
-def propagateDCG(du, cgl_values, dcgl_values, crs, ppc, st):
+def propagateDFG(du, decision, ppc, crs, st):
     """
-    Derives the decision to be propagated to the data unit from the access decisions
-    taken during the mapping phase for the coarse-grained resources that include the data unit.
+    Propagates access decisions within the data unit using depth-first traversal.
 
     Parameters:
     - du (dict): The data unit.
-    - cgl_values (list): The list of coarse-grained resource identifiers at each level.
-    - dcgl_values (list): The list of access decisions for coarse-grained resources at each level.
-    - crs (str): The conflict resolution strategy ('denials-take-precedence', 'permissions-take-precedence').
-    - ppc (str): The policy propagation criterion ('most-specific-overrides', 'no-overriding', 'no-propagation').
-    - st (str): The system type ('open', 'closed').
-
-    Returns:
-    - str: The access decision to be propagated to the data unit.
+    - decision (str): The access decision to propagate.
+    - ppc (str): The policy propagation criterion.
+    - crs (str): The conflict resolution strategy.
+    - st (str): The system type.
     """
-    dec = None
-    for cgl_value, dcgl_value in zip(cgl_values, dcgl_values):
-        if dcgl_value == 'permit' or dcgl_value == 'deny':
-            dec = dcgl_value
-        elif dec is None:
-            dec = 'permit' if st == 'open' else 'deny'
-        if dec == 'deny':
-            du.setdefault('unauthCGR', []).append(cgl_value)
-        dec = handleSP(dec, dcgl_value, ppc, crs, st)
-    return dec
 
+    def dfs(node, path, dec):
+        if isinstance(node, dict):
+            if 'id' in node and 'path' in node:
+                node_path = node['path']
+                if any(item['path'] == node_path for item in du['authS']):
+                    temp_dec = 'permit'
+                elif any(item['path'] == node_path for item in du['prohS']):
+                    temp_dec = 'deny'
+                else:
+                    temp_dec = None
 
-def propagateDFG(du, r, d, ppc, crs, st):
-    """
-    Propagates the access decision within the data unit through a depth-first visit of the data unit's tree structure.
+                final_dec = handleSP(dec, temp_dec, ppc, crs, st)
+                if final_dec == 'deny':
+                    du.setdefault('unauthS', []).append({'id': node['id'], 'path': node_path})
+                dec = final_dec
 
-    Parameters:
-    - du (dict): The data unit.
-    - r (dict): The current resource in the data unit's tree structure.
-    - d (str): The access decision of the parent resource.
-    - ppc (str): The policy propagation criterion ('most-specific-overrides', 'no-overriding', 'no-propagation').
-    - crs (str): The conflict resolution strategy ('denials-take-precedence', 'permissions-take-precedence').
-    - st (str): The system type ('open', 'closed').
+            for key, value in node.items():
+                dfs(value, path + [key], dec)
+        elif isinstance(node, list):
+            for item in node:
+                dfs(item, path, dec)
 
-    Returns:
-    - None
-    """
-    td = r.get('authS', []) + r.get('prohS', []) + r.get('undefS', [])
-    td = td[0] if td else None
-    fd = handleSP(d, td, ppc, crs, st)
-    if fd == 'deny':
-        du.setdefault('prohR', []).append(r['path'])
-    for child in r.values():
-        if isinstance(child, dict):
-            propagateDFG(du, child, fd, ppc, crs, st)
+    dfs(dict(du), [], decision)  # Create a copy of the data unit dictionary
 
 
 def generateView(du):
     """
-    Generates a view of the data unit by marking unauthorized components.
+    Generates the view of the data unit by marking unauthorized components.
 
     Parameters:
     - du (dict): The data unit.
@@ -331,14 +354,21 @@ def generateView(du):
     Returns:
     - dict: The view of the data unit with unauthorized components marked.
     """
-    view = {}
-    for k, v in du.items():
-        if isinstance(v, dict):
-            view[k] = generateView(v)
-        elif k not in ['unauthCGR', 'prohR']:
-            view[k] = v
-    if du.get('prohR'):
-        view['unauthorized'] = True
+
+    def mark_unauthorized(node, path):
+        if isinstance(node, dict):
+            if 'id' in node and 'path' in node:
+                node_path = node['path']
+                if any(item['path'] == node_path for item in du.get('unauthS', [])):
+                    return f"[UNAUTHORIZED ({node.get('id', '')})]"
+
+            return {key: mark_unauthorized(value, path + [key]) for key, value in node.items()}
+        elif isinstance(node, list):
+            return [mark_unauthorized(item, path) for item in node]
+        else:
+            return node
+
+    view = mark_unauthorized(du, [])
     return view
 
 
@@ -358,65 +388,31 @@ def projector_f(du, arc, co, crs, ppc, st):
     Returns:
     - dict: The view of the data unit with authorized and unauthorized components.
     """
-    # Process each URP marked for structuring.
-    for oid in du['tbs']:
-        if oid in du:  # Check if the URP exists within the data unit.
-            updateDu(du, oid, du[oid])  # Update the data unit accordingly.
-            del du[oid]  # Remove the URP after updating.
+    print(du)
+    # Remove temporary fields (tbs and tbp)
+    if 'tbs' in du:
+        for oid in du['tbs']:
+            if oid in du:
+                updateDu(du, oid, du[oid])
+                del du[oid]
+        del du['tbs']
 
-    # Process each URP marked for pruning.
-    for oid in du['tbp']:
-        if oid in du:  # Check if the URP exists within the data unit.
-            del du[oid]  # Remove the URP.
+    if 'tbp' in du:
+        for oid in du['tbp']:
+            if oid in du:
+                del du[oid]
+        del du['tbp']
 
-    # Clean up by removing the lists of URPs to be structured and pruned.
-    del du['tbs']
-    del du['tbp']
+    # Policy Composition
+    authS = []
+    prohS = []
 
-    # Policy composition task
     for p in du.get('pol', []):
-        # Derive the protection object obj for policy p
-        obj = {k: v for k, v in du.items() if k in p['path']}
-        obj.update({m['id']: m['psSet'] for m in du.get('meta', []) if m['id'] in p['path']})
+        obj = {'id': p['id'], 'path': p['path']}
+        if 'meta' in du:
+            for meta in du['meta']:
+                if meta['id'] == p['id'] and meta['path'] == p['path']:
+                    obj.update(meta['psSet'])
 
-        # Evaluate policies for the protection object
-        access_decision = evaluate(obj, arc)
-
-        # Combine positive and negative policies using combinePs and conflictRes
-        combined_decision = combinePs(access_decision, co)
-        temp_decision = conflictRes(combined_decision, crs)
-
-        # Keep track of temporary decisions
-        if temp_decision == 'permit':
-            du.setdefault('authS', []).append(p['path'])
-        elif temp_decision == 'deny':
-            du.setdefault('prohS', []).append(p['path'])
-        else:
-            du.setdefault('undefS', []).append(p['path'])
-
-    cgl_values = []
-    dcgl_values = []
-
-    # Extract the 'path' information from 'meta' or 'pol' lists
-    path = du.get('meta', [{}])[0].get('path', []) or du.get('pol', [{}])[0].get('path', [])
-
-    for level in range(1, len(path) + 1):
-        key = path[level - 1]
-        if level in cgl and key in cgl[level]:
-            cgl_value = cgl[level][key].get(du['_id'])
-            dcgl_value = dcgl[level][key].get(du['_id'])
-            cgl_values.append(cgl_value)
-            dcgl_values.append(dcgl_value)
-        else:
-            cgl_values.append(None)
-            dcgl_values.append(None)
-
-    dec = propagateDCG(du, cgl_values, dcgl_values, crs, ppc, st)
-
-    # Propagate decisions within the data unit
-    propagateDFG(du, du, dec, ppc, crs, st)
-
-    # View generation task
-    view = generateView(du)
-
-    return view
+        psa_decisions = [evaluate({'meta': obj, 'pol': [{'exp': psa, 'tp': 'positive'}]}, arc) for psa in p['psa']]
+        psp_decisions = [evaluate({'meta': obj, 'pol': [{'exp': psp, 'tp': 'negative'}]}, arc) for psp in p['psp']]
