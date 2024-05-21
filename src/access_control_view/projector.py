@@ -19,11 +19,11 @@ def evaluate(urp, arc):
     decisions = {}
 
     if 'meta' not in urp or not urp['meta'] or 'pol' not in urp or not urp['pol']:
-        decisions['default'] = {'decision': 'permit', 'tp': 'positive'}
+        decisions['set_0'] = {'decision': 'permit', 'tp': 'positive'}
         return decisions
 
     if 'subject' not in arc or 'attributes' not in arc['subject'] or 'department' not in arc['subject']['attributes']:
-        decisions['default'] = {'decision': 'deny', 'tp': 'negative'}
+        decisions['set_0'] = {'decision': 'deny', 'tp': 'negative'}
         return decisions
 
     subject_department = arc['subject']['attributes']['department']
@@ -414,5 +414,30 @@ def projector_f(du, arc, co, crs, ppc, st):
                 if meta['id'] == p['id'] and meta['path'] == p['path']:
                     obj.update(meta['psSet'])
 
-        psa_decisions = [evaluate({'meta': obj, 'pol': [{'exp': psa, 'tp': 'positive'}]}, arc) for psa in p['psa']]
-        psp_decisions = [evaluate({'meta': obj, 'pol': [{'exp': psp, 'tp': 'negative'}]}, arc) for psp in p['psp']]
+        psa_decisions = [{'set_0': {'decision': 'permit', 'tp': 'positive'}}] if not p['psa'] else [evaluate({'meta': obj, 'pol': [{'exp': psa, 'tp': 'positive'}]}, arc) for psa in p['psa']]
+        psp_decisions = [{'set_0': {'decision': 'permit', 'tp': 'negative'}}] if not p['psp'] else [evaluate({'meta': obj, 'pol': [{'exp': psp, 'tp': 'negative'}]}, arc) for psp in p['psp']]
+
+        combined_psa = combinePs({f'set_{i}': d['set_0'] for i, d in enumerate(psa_decisions)}, co)
+        combined_psp = combinePs({f'set_{i}': d['set_0'] for i, d in enumerate(psp_decisions)}, co)
+
+        decision = conflictRes({'positive': combined_psa.get('positive'), 'negative': combined_psp.get('negative')}, crs)
+
+        if decision == 'permit':
+            authS.append(obj)
+        elif decision == 'deny':
+            prohS.append(obj)
+
+        du['authS'] = authS
+        du['prohS'] = prohS
+
+        # Policy Propagation
+        propagated_decision = propagateDCG(du, arc, co, crs, ppc, st)
+
+        # Depth-First Propagation
+        if propagated_decision:
+            propagateDFG(du, propagated_decision, ppc, crs, st)
+
+        # Generate the view of the data unit
+        view = generateView(du)
+
+        return view

@@ -1,5 +1,6 @@
 #from src.access_control_view.specification import split_and_bind_policies_to_urp
 from src.access_control_view.mapper import m
+from src.access_control_view.projector import projector_m, projector_r, projector_f
 from src.access_control_view.specification import random_policy
 
 document = {
@@ -21,20 +22,20 @@ arc_variations = [
       'subject': {'aip': 'research'},
   }
 ]
+
+# Assuming combining option is defined
+co = 'all'
+crs = "denials-take-precedence"
+ppc = "most-specific-overrides"
+st = "open"
 #
-# # Assuming combining option is defined
-# co = 'all'
-# crs = "denials-take-precedence"
-# ppc = "most-specific-overrides"
-# st = "open"
-#
-# for arc in arc_variations:
-#     sec_map_dus = projector_m(security_urps, arc, co, crs)
-#     sec_reduces_data_units = {key: projector_r(urps, key) for key, urps in sec_map_dus.items()}
-#     print(sec_reduces_data_units)
-#     sec_finalized_data_units = {key: projector_f(du, arc, co, crs, ppc, st) for key, du in
-#                                 sec_reduces_data_units.items()}
-#     print(sec_finalized_data_units)
+for arc in arc_variations:
+    sec_map_dus = projector_m(mapped_documents, arc, co, crs)
+    sec_reduces_data_units = {key: projector_r(urps, key) for key, urps in sec_map_dus.items()}
+    sec_finalized_data_units = {key: projector_f(du, arc, co, crs, ppc, st) for key, du in sec_reduces_data_units.items()}
+
+    print(sec_finalized_data_units)
+
 #
 # reduce_derived_proj = [
 #     ("3e29",
