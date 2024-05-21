@@ -1,4 +1,3 @@
-#from src.access_control_view.specification import split_and_bind_policies_to_urp
 from src.access_control_view.mapper import m
 from src.access_control_view.projector import projector_m, projector_r, projector_f
 from src.access_control_view.specification import random_policy
@@ -18,9 +17,14 @@ for urp_id, urp in mapped_documents:
     random_policy(urp)
 
 arc_variations = [
-  {
-      'subject': {'aip': 'research'},
-  }
+    {
+        "subject": {
+            "id": "user123",
+            "attributes": {
+                "department": "sales"
+            }
+        }
+    }
 ]
 
 # Assuming combining option is defined
