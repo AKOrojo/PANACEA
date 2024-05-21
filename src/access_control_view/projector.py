@@ -19,11 +19,11 @@ def evaluate(urp, arc):
     decisions = {}
 
     if 'meta' not in urp or not urp['meta'] or 'pol' not in urp or not urp['pol']:
-        decisions['set_0'] = {'decision': 'permit', 'tp': 'positive'}
+        decisions['default'] = {'decision': 'permit', 'tp': 'positive'}
         return decisions
 
     if 'subject' not in arc or 'attributes' not in arc['subject'] or 'department' not in arc['subject']['attributes']:
-        decisions['set_0'] = {'decision': 'deny', 'tp': 'negative'}
+        decisions['default'] = {'decision': 'deny', 'tp': 'negative'}
         return decisions
 
     subject_department = arc['subject']['attributes']['department']
@@ -388,7 +388,7 @@ def projector_f(du, arc, co, crs, ppc, st):
     Returns:
     - dict: The view of the data unit with authorized and unauthorized components.
     """
-    print(du)
+
     # Remove temporary fields (tbs and tbp)
     if 'tbs' in du:
         for oid in du['tbs']:
@@ -414,8 +414,8 @@ def projector_f(du, arc, co, crs, ppc, st):
                 if meta['id'] == p['id'] and meta['path'] == p['path']:
                     obj.update(meta['psSet'])
 
-        psa_decisions = [{'set_0': {'decision': 'permit', 'tp': 'positive'}}] if not p['psa'] else [evaluate({'meta': obj, 'pol': [{'exp': psa, 'tp': 'positive'}]}, arc) for psa in p['psa']]
-        psp_decisions = [{'set_0': {'decision': 'permit', 'tp': 'negative'}}] if not p['psp'] else [evaluate({'meta': obj, 'pol': [{'exp': psp, 'tp': 'negative'}]}, arc) for psp in p['psp']]
+        psa_decisions = [evaluate({'meta': obj, 'pol': [{'exp': psa, 'tp': 'positive'}]}, arc) for psa in p['psa']]
+        psp_decisions = [evaluate({'meta': obj, 'pol': [{'exp': psp, 'tp': 'negative'}]}, arc) for psp in p['psp']]
 
         combined_psa = combinePs({f'set_{i}': d['set_0'] for i, d in enumerate(psa_decisions)}, co)
         combined_psp = combinePs({f'set_{i}': d['set_0'] for i, d in enumerate(psp_decisions)}, co)
@@ -423,21 +423,18 @@ def projector_f(du, arc, co, crs, ppc, st):
         decision = conflictRes({'positive': combined_psa.get('positive'), 'negative': combined_psp.get('negative')}, crs)
 
         if decision == 'permit':
-            authS.append(obj)
+            authS.append({'id': p['id'], 'path': p['path']})
         elif decision == 'deny':
-            prohS.append(obj)
+            prohS.append({'id': p['id'], 'path': p['path']})
 
-        du['authS'] = authS
-        du['prohS'] = prohS
+    du['authS'] = authS
+    du['prohS'] = prohS
 
-        # Policy Propagation
-        propagated_decision = propagateDCG(du, arc, co, crs, ppc, st)
+    # Policy Propagation
+    propagated_decision = propagateDCG(du, arc, co, crs, ppc, st)
+    propagateDFG(du, propagated_decision, ppc, crs, st)
 
-        # Depth-First Propagation
-        if propagated_decision:
-            propagateDFG(du, propagated_decision, ppc, crs, st)
+    # View Generation
+    view = generateView(du)
 
-        # Generate the view of the data unit
-        view = generateView(du)
-
-        return view
+    return view
