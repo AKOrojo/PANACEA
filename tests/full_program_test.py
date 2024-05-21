@@ -28,7 +28,7 @@ co = 'all'
 crs = "denials-take-precedence"
 ppc = "most-specific-overrides"
 st = "open"
-#
+
 for arc in arc_variations:
     sec_map_dus = projector_m(mapped_documents, arc, co, crs)
     sec_reduces_data_units = {key: projector_r(urps, key) for key, urps in sec_map_dus.items()}

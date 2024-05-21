@@ -19,11 +19,11 @@ def evaluate(urp, arc):
     decisions = {}
 
     if 'meta' not in urp or not urp['meta'] or 'pol' not in urp or not urp['pol']:
-        decisions['default'] = {'decision': 'permit', 'tp': 'positive'}
+        decisions['set_0'] = {'decision': 'permit', 'tp': 'positive'}
         return decisions
 
     if 'subject' not in arc or 'attributes' not in arc['subject'] or 'department' not in arc['subject']['attributes']:
-        decisions['default'] = {'decision': 'deny', 'tp': 'negative'}
+        decisions['set_0'] = {'decision': 'deny', 'tp': 'negative'}
         return decisions
 
     subject_department = arc['subject']['attributes']['department']
@@ -420,7 +420,8 @@ def projector_f(du, arc, co, crs, ppc, st):
         combined_psa = combinePs({f'set_{i}': d['set_0'] for i, d in enumerate(psa_decisions)}, co)
         combined_psp = combinePs({f'set_{i}': d['set_0'] for i, d in enumerate(psp_decisions)}, co)
 
-        decision = conflictRes({'positive': combined_psa.get('positive'), 'negative': combined_psp.get('negative')}, crs)
+        decision = conflictRes({'positive': combined_psa.get('positive'), 'negative': combined_psp.get('negative')},
+                               crs)
 
         if decision == 'permit':
             authS.append({'id': p['id'], 'path': p['path']})
