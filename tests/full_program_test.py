@@ -40,36 +40,3 @@ for arc in arc_variations:
 
     print(sec_finalized_data_units)
 
-#
-# reduce_derived_proj = [
-#     ("3e29",
-#      {"tbs": ["53da"],
-#       "tbp": [],
-#       "meta": [{"id": "body",
-#                 "path": ["3e29"],
-#                 "psSet": [{"aip": ["research, administration"],
-#                            "pip": ["marketing"]}]}],
-#       "pol": [{"id": "body",
-#                "path": ["3e29"],
-#                "psa": ["s.ap in meta.aip"],
-#                "psp": ["s.ap in meta pip"]}],
-#       "body": "I'm ready, are you?",
-#       "headers": "53da",
-#       "53da": {
-#           "From": "daphneco64@bigplanet.com",
-#       }})]
-#
-# x = {'doc1':
-#      {'_id': 'doc1',
-#       'key': 'value',
-#       'f93ac727-941b-4ef5-8897-3166f9215832': {'body': 'value'},
-#       'nested': 'f93ac727-941b-4ef5-8897-3166f9215832',
-#       'tbs': ['f93ac727-941b-4ef5-8897-3166f9215832'],
-#       'tbp': ['f93ac727-941b-4ef5-8897-3166f9215832'],
-#       'meta': [{'id': '67adb03f-562a-45b5-8946-75690a5db8f6',
-#                 'path': ['doc1', 'f93ac727-941b-4ef5-8897-3166f9215832'],
-#                 'psSet': [{'aip': ['research']}, {'aip': ['marketing']}]}],
-#       'pol': [{'id': '67adb03f-562a-45b5-8946-75690a5db8f6',
-#                'path': ['doc1', 'f93ac727-941b-4ef5-8897-3166f9215832'],
-#                'psa': ['s.ap in meta.aip'],
-#                'psp': ['s.ap in meta.aip']}]}}
