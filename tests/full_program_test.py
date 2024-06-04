@@ -36,8 +36,6 @@ st = "open"
 for arc in arc_variations:
     sec_map_dus = projector_m(mapped_documents, arc, co, crs)
     sec_reduces_data_units = {key: projector_r(urps, key) for key, urps in sec_map_dus.items()}
-    print(sec_reduces_data_units)
     sec_finalized_data_units = {key: projector_f(du, arc, co, crs, ppc, st) for key, du in sec_reduces_data_units.items()}
 
-    #print(sec_finalized_data_units)
-
+    print(sec_finalized_data_units)

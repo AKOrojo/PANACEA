@@ -146,7 +146,6 @@ def projector_m(urps, arc, co, crs):
                 urp['combined_decision'] = combined_decision
                 conflict_resolution = conflictRes(combined_decision, crs)
                 urp['conflict_resolution'] = conflict_resolution
-                print(urp)
 
                 # Keep track of derived decisions for coarse-grained resources
                 level = len(urp['path'])
@@ -166,7 +165,6 @@ def projector_m(urps, arc, co, crs):
                 urp['combined_decision'] = combined_decision
                 conflict_resolution = conflictRes(combined_decision, crs)
                 urp['conflict_resolution'] = conflict_resolution
-                print(urp)
 
     return grouped_urps
 
@@ -388,7 +386,7 @@ def projector_f(du, arc, co, crs, ppc, st):
     Returns:
     - dict: The view of the data unit with authorized and unauthorized components.
     """
-    print(du)
+
     # Remove temporary fields (tbs and tbp)
     if 'tbs' in du:
         for oid in du['tbs']:
