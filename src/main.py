@@ -10,10 +10,12 @@ from src.access_control_view.util_functions import write_urp_to_file, clear_or_c
 
 logger = get_logger(__name__)
 
+
 def print_time(message, start_time):
     end_time = time.time()
     print(f"{message}: {int((end_time - start_time) * 1000)} ms")
     return end_time
+
 
 def main():
     start_time = time.time()
@@ -79,7 +81,8 @@ def main():
         sec_reduces_data_units = {key: projector_r(urps, key) for key, urps in sec_map_dus.items()}
         start_time = print_time("projector_r", start_time)
 
-        sec_finalized_data_units = {key: projector_f(du, arc, co, crs, ppc, st) for key, du in sec_reduces_data_units.items()}
+        sec_finalized_data_units = {key: projector_f(du, arc, co, crs, ppc, st) for key, du in
+                                    sec_reduces_data_units.items()}
         start_time = print_time("projector_f", start_time)
 
         clear_or_create_file('view_generation/finalized_data_units.log')
@@ -88,6 +91,7 @@ def main():
         for finalized_data_unit in sec_finalized_data_units.items():
             write_finalized_data_units_to_file(finalized_data_unit, 'view_generation/finalized_data_units.log')
         start_time = print_time("write_finalized_data_units_to_file", start_time)
+
 
 if __name__ == '__main__':
     main()
