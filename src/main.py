@@ -1,6 +1,6 @@
 import time
 from src.access_control_view.mongo_connection import get_mongo_client, get_database, get_collection, \
-    get_data_from_collection
+    get_data_from_collection, generate_node_id
 from src.access_control_view.projector import projector_m, projector_f, projector_r
 from src.access_control_view.specification import random_policy
 from src.access_control_view.mapper import m
@@ -33,10 +33,12 @@ def main():
     documents = get_data_from_collection(collection)
     start_time = print_time("get_data_from_collection", start_time)
 
+    node_id = generate_node_id(client, ip='10.100.207.21', port=27017)
+
     # Map documents to the unified model
     mapped_documents = []
     for document in documents:
-        mapped_document = m(document)
+        mapped_document = m(document, node_id)
         mapped_documents.extend(mapped_document)
     start_time = print_time("mapping_documents", start_time)
 
