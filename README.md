@@ -30,11 +30,11 @@ The Access Control View System consists of the following main components:
 
 1. Clone the repository:
 
-git clone https://github.com/your-username/access-control-view-system.git
+""" git clone https://github.com/your-username/access-control-view-system.git """
 
 2. Install the required dependencies:
 
-pip install -r requirements.txt
+""" pip install -r requirements.txt """
 
 3. Set up the MongoDB connection by providing the appropriate configuration in `src/access_control_view/mongo_connection.py`.
 
