@@ -8,9 +8,11 @@ document = {
     "nested": {"body": "value"}
 }
 
+node_id = "node_id"
+
 # Map documents to the unified model
 mapped_documents = []
-mapped_document = m(document)
+mapped_document = m(document, node_id)
 mapped_documents.extend(mapped_document)
 
 for urp_id, urp in mapped_documents:

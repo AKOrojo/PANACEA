@@ -132,7 +132,7 @@ def projector_m(urps, arc, co, crs):
     grouped_urps = {}  # Initialize an empty dictionary to hold grouped URPs.
     for urp_tuple in urps:
         urp_id, urp_value = urp_tuple  # Extract ID and value from each tuple in the list.
-        key = urp_value['path'][0]  # Use the first element of the 'path' as the grouping key.
+        key = urp_value['path'][1]  # Use the first element of the 'path' as the grouping key.
         if key not in grouped_urps:
             grouped_urps[key] = []  # Initialize a new list if key is not already present.
         grouped_urps[key].append(urp_value)  # Append the URPs to the appropriate list.

@@ -2,6 +2,29 @@ from src.access_control_view.util_functions import setField
 import uuid
 
 
+def anonymize(value):
+    """
+    Anonymizes a given value based on its type.
+
+    :param value: The value to be anonymized.
+    :return: The anonymized value.
+    """
+    if isinstance(value, str):
+        return "[Anonymized String]"
+    elif isinstance(value, int):
+        return -1
+    elif isinstance(value, float):
+        return -1.0
+    elif isinstance(value, bool):
+        return False
+    elif isinstance(value, list):
+        return ["[Anonymized List]"]
+    elif isinstance(value, dict):
+        return {"[Anonymized Dict]": None}
+    else:
+        return None
+
+
 def generateId():
     """Generates a unique identifier for each URP. For simplicity, use UUID."""
     return str(uuid.uuid4())
@@ -32,15 +55,16 @@ def duMapper(cPath, obj):
             sUrpS = duMapper(sPath, v)
             urpS.extend(sUrpS)
         else:
-            setField(urp, "V", v)
+            anonymized_v = anonymize(v)  # Anonymize the simple field value
+            setField(urp, "V", anonymized_v)
         push(urpS, urp)
     return urpS
 
 
-def m(du):
+def m(du, node_id):
     """The mapping function 'm' that processes a data unit 'du'."""
     emitted_pairs = []
-    urpS = duMapper([du.get('_id')], du)
+    urpS = duMapper([node_id, du.get('_id')], du)
     for urp in urpS:
         emitted_pairs.append((urp['id'], urp))
     return emitted_pairs
