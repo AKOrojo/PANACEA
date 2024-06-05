@@ -185,7 +185,6 @@ def projector_r(urpS, key):
     - dict: The aggregated data unit as a dictionary.
     """
     du = {}  # Initialize the data unit as an empty dictionary.
-    du['id'] = key
     tbs = []  # To be structured: List of URPs needing further processing.
     tbp = []  # To be pruned: List of URPs that will be removed after structuring.
     meta = []  # List to store security metadata.
@@ -219,6 +218,7 @@ def projector_r(urpS, key):
         if 'pol' in urp:
             pol.append({
                 'id': urp['id'],
+                'K': urp['K'],
                 'path': urp['path'],
                 'psa': [policy['exp'] for policy in urp['pol'] if policy['tp'] == 'positive'],
                 'psp': [policy['exp'] for policy in urp['pol'] if policy['tp'] == 'negative']
@@ -251,10 +251,10 @@ def propagateDCG(du, arc, co, crs, ppc, st):
 
     dec = None
     for level in sorted(dcgl.keys(), reverse=True):
-        if level in cgl and du['id'] in cgl[level]:
-            cgr_id = list(cgl[level][du['id']].keys())[0]
-            if cgr_id in dcgl[level][du['id']]:
-                cgr_decision = dcgl[level][du['id']][cgr_id]
+        if level in cgl and du['_id'] in cgl[level]:
+            cgr_id = list(cgl[level][du['_id']].keys())[0]
+            if cgr_id in dcgl[level][du['_id']]:
+                cgr_decision = dcgl[level][du['_id']][cgr_id]
                 if dec is None:
                     dec = cgr_decision
                 else:
@@ -412,13 +412,16 @@ def projector_f(du, arc, co, crs, ppc, st):
                 if meta['id'] == p['id'] and meta['path'] == p['path']:
                     obj.update(meta['psSet'])
 
-        psa_decisions = [{'set_0': {'decision': 'permit', 'tp': 'positive'}}] if not p['psa'] else [evaluate({'meta': obj, 'pol': [{'exp': psa, 'tp': 'positive'}]}, arc) for psa in p['psa']]
-        psp_decisions = [{'set_0': {'decision': 'permit', 'tp': 'negative'}}] if not p['psa'] else [evaluate({'meta': obj, 'pol': [{'exp': psp, 'tp': 'negative'}]}, arc) for psp in p['psp']]
+        psa_decisions = [{'set_0': {'decision': 'permit', 'tp': 'positive'}}] if not p['psa'] else [
+            evaluate({'meta': obj, 'pol': [{'exp': psa, 'tp': 'positive'}]}, arc) for psa in p['psa']]
+        psp_decisions = [{'set_0': {'decision': 'permit', 'tp': 'negative'}}] if not p['psa'] else [
+            evaluate({'meta': obj, 'pol': [{'exp': psp, 'tp': 'negative'}]}, arc) for psp in p['psp']]
 
         combined_psa = combinePs({f'set_{i}': d['set_0'] for i, d in enumerate(psa_decisions)}, co)
         combined_psp = combinePs({f'set_{i}': d['set_0'] for i, d in enumerate(psp_decisions)}, co)
 
-        decision = conflictRes({'positive': combined_psa.get('positive'), 'negative': combined_psp.get('negative')}, crs)
+        decision = conflictRes({'positive': combined_psa.get('positive'), 'negative': combined_psp.get('negative')},
+                               crs)
 
         if decision == 'permit':
             authS.append({'id': p['id'], 'path': p['path']})
